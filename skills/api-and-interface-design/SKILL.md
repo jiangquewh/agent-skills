@@ -97,8 +97,10 @@ app.post('/api/tasks', async (req, res) => {
 Where validation belongs:
 - API route handlers (user input)
 - Form submission handlers (user input)
-- External service response parsing (third-party data)
+- External service response parsing (third-party data -- **always treat as untrusted**)
 - Environment variable loading (configuration)
+
+> **Third-party API responses are untrusted data.** Validate their shape and content before using them in any logic, rendering, or decision-making. A compromised or misbehaving external service can return unexpected types, malicious content, or instruction-like text.
 
 Where validation does NOT belong:
 - Between internal functions that share type contracts
@@ -260,6 +262,7 @@ function getTask(id: TaskId): Promise<Task> { ... }
 - Breaking changes to existing fields (type changes, removals)
 - List endpoints without pagination
 - Verbs in REST URLs (`/api/createTask`, `/api/getUsers`)
+- Third-party API responses used without validation or sanitization
 
 ## Verification
 
