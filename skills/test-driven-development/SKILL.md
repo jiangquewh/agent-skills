@@ -19,6 +19,8 @@ Write a failing test before writing the code that makes it pass. For bug fixes, 
 
 **When NOT to use:** Pure configuration changes, documentation updates, or static content changes that have no behavioral impact.
 
+**Related:** For browser-based changes, combine TDD with `browser-testing-with-devtools` to verify runtime behavior in addition to unit tests.
+
 ## The TDD Cycle
 
 ```
