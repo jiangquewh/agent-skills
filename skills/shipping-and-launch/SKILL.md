@@ -128,8 +128,9 @@ return null;
    └── Monitor error rates, latency, user behavior
    └── Compare metrics: canary vs. baseline
    └── 24-48 hour monitoring window
+   └── Advance only if all thresholds pass (see table below)
 
-5. GRADUAL increase (25% → 50% → 100%)
+5. GRADUAL increase (25% -> 50% -> 100%)
    └── Same monitoring at each step
    └── Ability to roll back to previous percentage at any point
 
@@ -137,6 +138,17 @@ return null;
    └── Monitor for 1 week
    └── Clean up feature flag
 ```
+
+### Rollout Decision Thresholds
+
+Use these thresholds to decide whether to advance, hold, or roll back at each stage:
+
+| Metric | Advance (green) | Hold and investigate (yellow) | Roll back (red) |
+|--------|-----------------|-------------------------------|-----------------|
+| Error rate | Within 10% of baseline | 10-100% above baseline | >2x baseline |
+| P95 latency | Within 20% of baseline | 20-50% above baseline | >50% above baseline |
+| Client JS errors | No new error types | New errors at <0.1% of sessions | New errors at >0.1% of sessions |
+| Business metrics | Neutral or positive | Decline <5% (may be noise) | Decline >5% |
 
 ### When to Roll Back
 
