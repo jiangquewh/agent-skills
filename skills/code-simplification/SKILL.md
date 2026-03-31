@@ -31,7 +31,7 @@ Simplify code by reducing complexity while preserving exact behavior. The goal i
 
 ### 1. Preserve Behavior Exactly
 
-Never change what the code does — only how it expresses it. All inputs, outputs, side effects, error behavior, and edge cases must remain identical. If you're not sure a simplification preserves behavior, don't make it.
+Don't change what the code does — only how it expresses it. All inputs, outputs, side effects, error behavior, and edge cases must remain identical. If you're not sure a simplification preserves behavior, don't make it.
 
 ```
 ASK BEFORE EVERY CHANGE:
@@ -156,7 +156,7 @@ Scan for these patterns — each one is a concrete signal, not a vague smell:
 
 ### Step 3: Apply Changes Incrementally
 
-Make one simplification at a time. Run tests after each change. **Always submit refactoring changes separately from feature or bug fix changes.** A PR that refactors and adds a feature is two PRs — split them.
+Make one simplification at a time. Run tests after each change. **Submit refactoring changes separately from feature or bug fix changes.** A PR that refactors and adds a feature is two PRs — split them.
 
 ```
 FOR EACH SIMPLIFICATION:
@@ -166,7 +166,7 @@ FOR EACH SIMPLIFICATION:
 4. If tests fail → revert and reconsider
 ```
 
-Never batch multiple simplifications into a single untested change. If something breaks, you need to know which simplification caused it.
+Avoid batching multiple simplifications into a single untested change. If something breaks, you need to know which simplification caused it.
 
 **The Rule of 500:** If a refactoring would touch more than 500 lines, invest in automation (codemods, sed scripts, AST transforms) rather than making the changes by hand. Manual edits at that scale are error-prone and exhausting to review.
 
