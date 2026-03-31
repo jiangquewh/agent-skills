@@ -32,7 +32,7 @@ This means: every public behavior — including undocumented quirks, error messa
 
 ### The One-Version Rule
 
-Never force consumers to choose between multiple versions of the same dependency or API. Diamond dependency problems arise when different consumers need different versions of the same thing. Design for a world where only one version exists at a time — extend rather than fork.
+Avoid forcing consumers to choose between multiple versions of the same dependency or API. Diamond dependency problems arise when different consumers need different versions of the same thing. Design for a world where only one version exists at a time — extend rather than fork.
 
 ### 1. Contract First
 
@@ -170,7 +170,7 @@ POST   /api/tasks/:id/comments → Add a comment to a task
 
 ### Pagination
 
-Always paginate list endpoints:
+Paginate list endpoints:
 
 ```typescript
 // Request
