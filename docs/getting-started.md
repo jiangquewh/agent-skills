@@ -112,6 +112,12 @@ The `.claude/commands/` directory contains slash commands for Claude Code:
 | `/review` | code-review-and-quality |
 | `/ship` | shipping-and-launch |
 
+> **Note:** When installed as a Claude Code plugin you may see a warning like
+> _"Default commands/ folder is ignored because the manifest sets 'commands'"_.
+> This is expected. The root `commands/` directory belongs to the Antigravity CLI
+> and is intentionally separate from `.claude/commands/`. All Claude Code slash
+> commands load correctly from `.claude/commands/`; the warning is cosmetic.
+
 ## Using References
 
 The `references/` directory contains supplementary checklists:
