@@ -4,6 +4,8 @@ Skills in this repository are intentionally portable. Every `SKILL.md` keeps its
 
 Several agents also support extra runtime controls: model routing, tool restrictions, turn limits, execution isolation. These controls are valuable, but they are vendor-specific and do not belong in the shared, portable frontmatter. This document explains which controls each agent supports, where they belong, and how to apply them as an opt-in without breaking portability.
 
+This is the canonical reference for per-agent configuration, and it supersedes the earlier approach of adding vendor fields to top-level `SKILL.md` frontmatter. Fields such as `kind`, `model`, `temperature`, `max_turns`, `tools`, and `context` must not appear at the top level of a skill. They belong under `metadata` or in a separate per-agent adapter file, as described below.
+
 ## Principles
 
 1. **Keep `SKILL.md` portable.** The Agent Skills specification reserves top-level frontmatter for `name`, `description`, `license`, `compatibility`, `metadata`, and the experimental `allowed-tools`. Vendor or client-specific properties belong under `metadata`, not at the top level.
@@ -41,6 +43,17 @@ Gemini CLI and Antigravity discover skills the same way: they match `name` and `
 
 Google recommends omitting `temperature` for Gemini 3.x models and using `thinking_level` instead. Do not hardcode `temperature` on skills or subagents routed to 3.x models; prefer `thinking_level` and revisit this guidance as the models evolve.
 
+```yaml
+# .gemini/agents/security-auditor.md
+---
+kind: local
+model: gemini-3-pro
+thinking_level: high   # not: temperature: 0.1
+tools: [read_file, grep]
+max_turns: 10
+---
+```
+
 ## Automating with scripts
 
 Maintaining per-agent metadata by hand across every skill is repetitive, drifts out of sync, and is easy to get wrong. A better approach is to keep a single source of truth and generate the agent-specific output:
@@ -53,4 +66,4 @@ Generation also lets the tooling validate **semantics, not just shape**: confirm
 
 ## Status
 
-This document is a draft consolidating the discussion from [#272](https://github.com/addyosmani/agent-skills/pull/272) and [#36](https://github.com/addyosmani/agent-skills/pull/36). The goal is a single reference for per-agent configuration that keeps the shared skills portable while documenting the advanced controls each agent offers as an opt-in. The script-based automation described above is a proposal pending agreement before any implementation.
+This document consolidates the discussion from [#272](https://github.com/addyosmani/agent-skills/pull/272) and [#36](https://github.com/addyosmani/agent-skills/pull/36), both closed in favor of this approach. It is the single reference for per-agent configuration: it keeps the shared skills portable while documenting the advanced controls each agent offers as an opt-in. The script-based automation described above is a proposal pending agreement before any implementation.
