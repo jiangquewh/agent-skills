@@ -40,9 +40,17 @@ Before adding a new skill or significantly reworking an existing one, run the pr
 - `npm test` — Not applicable (this is a documentation project)
 - Validate: Check that all SKILL.md files have valid YAML frontmatter with name and description
 
+## Pull Requests
+
+PRs target the upstream repository's default branch. In a typical fork setup the upstream remote is `upstream` and your fork is `origin`, but the exact remote names are not what matters here.
+
+- Before opening a PR, search the upstream repository's open PRs and issues for work that touches the same files or rules. If any overlaps, coordinate (build on it, align your rules with it, or rebase after it merges) instead of opening a conflicting PR.
+- Prefer small, focused PRs over large refactors of widely shared files (for example, files under `scripts/`), which are more likely to collide with in-flight work.
+
 ## Boundaries
 
 - Always: Run the CONTRIBUTING.md pre-flight checks before creating a new skill directory
 - Always: Follow the skill-anatomy.md format for new skills
+- Always: Check the upstream repo's open PRs and issues for overlap before opening a new PR
 - Never: Add skills that are vague advice instead of actionable processes
 - Never: Duplicate content between skills — reference other skills instead
