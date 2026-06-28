@@ -126,7 +126,7 @@ When a skill ships runnable helpers under `scripts/`, each script follows these 
 - Write status messages to stderr: `echo "Message" >&2`.
 - Write machine-readable output (JSON) to stdout.
 - Include a cleanup trap for temporary files.
-- Reference the script path as `/mnt/skills/user/<skill-name>/scripts/<script>.sh`.
+- Reference the script path as `skills/<skill-name>/scripts/<script>.sh` (repo-relative).
 
 ## Writing Principles
 
