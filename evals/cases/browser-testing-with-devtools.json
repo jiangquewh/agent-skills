@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Write a spec for the new billing feature before we start"
+        "prompt": "Write a spec for the new billing feature before we start",
+        "owner": "spec-driven-development"
       },
       {
-        "prompt": "Break this PRD into ordered implementation tasks"
+        "prompt": "Break this PRD into ordered implementation tasks",
+        "owner": "planning-and-task-breakdown"
       }
     ]
   },
@@ -33,7 +35,8 @@
         "Findings are grounded in observed runtime data (console, network, DOM), not static code reading alone",
         "The report distinguishes what was observed from what is inferred",
         "A concrete next step or fix hypothesis is provided"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

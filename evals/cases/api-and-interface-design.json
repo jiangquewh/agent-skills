@@ -17,7 +17,8 @@
     ],
     "negative": [
       {
-        "prompt": "My unit test is failing with a null pointer exception"
+        "prompt": "My unit test is failing with a null pointer exception",
+        "owner": "debugging-and-error-recovery"
       },
       {
         "prompt": "Make this landing page responsive on mobile"
@@ -34,7 +35,8 @@
         "Input validation at the boundary is addressed for user-supplied URLs",
         "Versioning or compatibility strategy is stated",
         "The response does not silently invent unstated requirements"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

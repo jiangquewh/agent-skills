@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Track down the memory leak in the worker"
+        "prompt": "Find the root cause of the memory leak in the worker",
+        "owner": "debugging-and-error-recovery"
       },
       {
-        "prompt": "Add rate limiting to the login endpoint"
+        "prompt": "Harden the login endpoint against brute force attacks",
+        "owner": "security-and-hardening"
       }
     ]
   },
@@ -33,7 +35,8 @@
         "The ADR states context, decision, alternatives, and consequences distinctly",
         "Trade-offs and rejected options are recorded, not just the winning choice",
         "The document is written in timeless language describing current state"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

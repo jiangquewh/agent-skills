@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Update the architecture diagram in the docs"
+        "prompt": "Update the architecture diagram in the docs",
+        "owner": "documentation-and-adrs"
       },
       {
-        "prompt": "Which skill should handle this request?"
+        "prompt": "Which skill should handle this request?",
+        "owner": "using-agent-skills"
       }
     ]
   },
@@ -33,7 +35,8 @@
         "A failing test is written and shown failing before the fix",
         "The implementation is the minimum needed to pass",
         "The full suite is run after the fix to catch regressions"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

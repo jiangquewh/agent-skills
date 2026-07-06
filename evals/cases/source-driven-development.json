@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Fix the flaky test in CI"
+        "prompt": "Fix the flaky test in CI",
+        "owner": "ci-cd-and-automation"
       },
       {
-        "prompt": "Break the spec into ordered tasks"
+        "prompt": "Break the spec into ordered tasks",
+        "owner": "planning-and-task-breakdown"
       }
     ]
   },
@@ -33,7 +35,8 @@
         "Claims about framework behavior cite official documentation",
         "Unverified assumptions are flagged rather than presented as fact",
         "Deprecated patterns are avoided in favor of documented current ones"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

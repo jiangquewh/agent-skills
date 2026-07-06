@@ -20,7 +20,8 @@
         "prompt": "Add a loading spinner to the submit button"
       },
       {
-        "prompt": "Write integration tests for the payments API"
+        "prompt": "Write integration tests for the payments API",
+        "owner": "test-driven-development"
       }
     ]
   },
@@ -33,7 +34,8 @@
         "Refactor, fix, and feature land as separate commits",
         "Commit messages are imperative and standalone",
         "Each commit leaves the tree in a working state"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

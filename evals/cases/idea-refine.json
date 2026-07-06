@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Fix the failing CI pipeline"
+        "prompt": "Fix the failing CI pipeline",
+        "owner": "ci-cd-and-automation"
       },
       {
-        "prompt": "Audit the upload endpoint for vulnerabilities"
+        "prompt": "Audit the upload endpoint for vulnerabilities",
+        "owner": "security-and-hardening"
       }
     ]
   },
@@ -34,7 +36,8 @@
         "Hidden assumptions are surfaced explicitly",
         "The output includes an explicit Not Doing list",
         "The agent pushes back on weak aspects instead of only agreeing"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

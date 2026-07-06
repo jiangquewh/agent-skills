@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Write the API documentation for the orders service"
+        "prompt": "Write the API documentation for the orders service",
+        "owner": "documentation-and-adrs"
       },
       {
-        "prompt": "Simplify this working function for readability"
+        "prompt": "Simplify this working function for readability",
+        "owner": "code-simplification"
       }
     ]
   },
@@ -34,7 +36,8 @@
         "The root cause is identified and stated, not just the symptom patched",
         "A regression test exists after the fix",
         "The fix is minimal and scoped to the cause"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

@@ -17,7 +17,8 @@
     ],
     "negative": [
       {
-        "prompt": "Debug the crash on startup"
+        "prompt": "Debug the crash on startup",
+        "owner": "debugging-and-error-recovery"
       },
       {
         "prompt": "Encode the output so it is safe against XSS"
@@ -34,7 +35,8 @@
         "Tasks are ordered by dependency",
         "Tasks are vertical slices rather than horizontal layers",
         "No implementation code is written during planning"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

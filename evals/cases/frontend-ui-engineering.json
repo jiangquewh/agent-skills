@@ -17,7 +17,8 @@
     ],
     "negative": [
       {
-        "prompt": "Optimize the slow database indexes"
+        "prompt": "Optimize the slow database indexes",
+        "owner": "performance-optimization"
       },
       {
         "prompt": "Tag and publish the release"
@@ -33,7 +34,8 @@
         "Keyboard interaction and focus management are implemented, not just mouse clicks",
         "ARIA roles or semantic elements are used correctly",
         "Component state is managed deliberately rather than ad hoc"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

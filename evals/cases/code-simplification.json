@@ -20,7 +20,8 @@
         "prompt": "Add a feature flag system to the app"
       },
       {
-        "prompt": "Diagnose why the build broke overnight"
+        "prompt": "Diagnose why the build broke overnight",
+        "owner": "debugging-and-error-recovery"
       }
     ]
   },
@@ -34,7 +35,8 @@
         "Complexity is reduced rather than relocated",
         "The response explains what was removed and why it was safe",
         "No new features are added during the simplification"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

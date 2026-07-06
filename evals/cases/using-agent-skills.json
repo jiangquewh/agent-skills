@@ -17,7 +17,8 @@
     ],
     "negative": [
       {
-        "prompt": "Fix the null pointer crash in checkout"
+        "prompt": "Debug the null pointer crash in checkout",
+        "owner": "debugging-and-error-recovery"
       },
       {
         "prompt": "Make the modal accessible for keyboard users"
@@ -33,7 +34,8 @@
         "The chosen skill matches the decision tree in the meta-skill",
         "The rationale references the routing logic rather than guessing",
         "Core operating behaviors (assumptions surfaced) are respected"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

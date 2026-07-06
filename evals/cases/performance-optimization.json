@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Draft the deprecation notice for the v1 API"
+        "prompt": "Draft the deprecation notice for the v1 API",
+        "owner": "deprecation-and-migration"
       },
       {
-        "prompt": "Design the public interface for the billing module"
+        "prompt": "Design the public interface for the billing module",
+        "owner": "api-and-interface-design"
       }
     ]
   },
@@ -33,7 +35,8 @@
         "Performance is measured before any optimization is applied",
         "The fix targets the measured bottleneck rather than guessing",
         "Improvement is verified against the baseline after the change"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

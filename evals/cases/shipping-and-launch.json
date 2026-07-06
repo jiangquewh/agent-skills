@@ -17,7 +17,8 @@
     ],
     "negative": [
       {
-        "prompt": "Refine my rough product idea into something concrete"
+        "prompt": "Refine my rough product idea into something concrete",
+        "owner": "idea-refine"
       },
       {
         "prompt": "Why is this function so slow on large inputs?"
@@ -33,7 +34,8 @@
         "A rollback plan exists before the go decision",
         "Monitoring and alerting readiness is verified",
         "A clear go or no-go verdict is stated with blockers listed"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

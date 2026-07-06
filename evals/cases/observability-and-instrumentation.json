@@ -17,7 +17,8 @@
     ],
     "negative": [
       {
-        "prompt": "Simplify this over-clever component"
+        "prompt": "Simplify this over-clever component",
+        "owner": "code-simplification"
       },
       {
         "prompt": "Draft the PRD for the referral program"
@@ -34,7 +35,8 @@
         "Logs are structured events with a correlation id, not prose strings",
         "Metrics avoid unbounded label cardinality",
         "Alerts are symptom-based and actionable"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Trace this request across our services"
+        "prompt": "Trace this request across our services",
+        "owner": "observability-and-instrumentation"
       },
       {
-        "prompt": "Simplify this clever one-liner into readable code"
+        "prompt": "Simplify this clever one-liner into readable code",
+        "owner": "code-simplification"
       }
     ]
   },
@@ -34,7 +36,8 @@
         "Ambiguities are surfaced as questions rather than silently resolved",
         "A testing strategy is part of the spec",
         "No implementation code is written"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

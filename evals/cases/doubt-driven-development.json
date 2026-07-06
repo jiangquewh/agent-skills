@@ -33,7 +33,8 @@
         "Non-trivial claims in the plan are extracted and challenged individually",
         "At least one assumption is tested rather than accepted",
         "The verdict distinguishes verified claims from surviving doubts"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

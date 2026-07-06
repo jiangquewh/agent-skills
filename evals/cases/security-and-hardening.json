@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Rename these variables for clarity"
+        "prompt": "Rename these variables for clarity",
+        "owner": "code-simplification"
       },
       {
-        "prompt": "Set up the release tagging workflow"
+        "prompt": "Set up the release tagging workflow",
+        "owner": "git-workflow-and-versioning"
       }
     ]
   },
@@ -34,7 +36,8 @@
         "SSRF protections cover private and reserved addresses, not just scheme checks",
         "Input validation is enforced at the boundary",
         "No secrets are logged or exposed in errors"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "What alerts should we page on for the new service?"
+        "prompt": "What alerts should we page on for the new service?",
+        "owner": "observability-and-instrumentation"
       },
       {
-        "prompt": "Interview me to figure out the real requirements"
+        "prompt": "Interview me to figure out the real requirements",
+        "owner": "interview-me"
       }
     ]
   },
@@ -33,7 +35,8 @@
         "Work proceeds in thin vertical slices rather than one large change",
         "Each slice is verified (tests or build) before the next begins",
         "Each slice is committed separately"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

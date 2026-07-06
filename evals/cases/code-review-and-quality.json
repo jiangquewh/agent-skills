@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Deploy this to production now"
+        "prompt": "Deploy this to production now",
+        "owner": "shipping-and-launch"
       },
       {
-        "prompt": "Write a failing test for the bug before fixing it"
+        "prompt": "Write a failing test for the bug before fixing it",
+        "owner": "test-driven-development"
       }
     ]
   },
@@ -34,7 +36,8 @@
         "Every finding carries a severity label from the skill's taxonomy",
         "Security of user input is explicitly considered for the new endpoint",
         "The review leads with high-leverage findings rather than nits"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }

@@ -17,10 +17,12 @@
     ],
     "negative": [
       {
-        "prompt": "Refactor this function so it is easier to read"
+        "prompt": "Refactor this function so it is easier to read",
+        "owner": "code-simplification"
       },
       {
-        "prompt": "Add structured logging to the checkout service"
+        "prompt": "Add structured logging to the checkout service",
+        "owner": "observability-and-instrumentation"
       }
     ]
   },
@@ -34,7 +36,8 @@
         "Failure of any quality gate fails the pipeline run",
         "Steps are ordered logically and cache or setup steps are sane",
         "No secrets are hardcoded in the workflow"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }
