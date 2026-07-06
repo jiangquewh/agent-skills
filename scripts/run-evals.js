@@ -41,6 +41,12 @@ const RESULTS_DIR = path.join(ROOT, 'evals', 'results');
 const EXECUTOR_TIMEOUT_MS = 15 * 60 * 1000;
 const GRADER_TIMEOUT_MS = 5 * 60 * 1000;
 
+// Tools the Tier-3 executor may use inside its throwaway workspace. Edits are
+// auto-accepted (acceptEdits) and these tools are pre-approved so the agent
+// can perform the skill instead of narrating it. Tier 3 is opt-in and spends
+// tokens; review this list if your fixtures invoke anything unusual.
+const EXECUTOR_TOOLS = 'Read,Glob,Grep,Edit,Write,Bash';
+
 // Documented minimums per case file (evals/README.md). Warning-level for now.
 const MIN_POSITIVE = 3;
 const MIN_NEGATIVE = 2;
@@ -374,19 +380,24 @@ function runBehavioral(skillName, dryRun) {
       console.log(`  note: eval ${ev.id} is provisional (${fixtures ? 'flagged' : 'no fixtures'}) — results are a sanity check, not evidence`);
     }
     if (dryRun) {
-      console.log(`[dry-run] eval ${ev.id}: workspace + ${fixtures} fixture(s); claude -p --verbose --output-format stream-json --append-system-prompt <${skillName}/SKILL.md> "${ev.prompt.slice(0, 60)}..."`);
+      console.log(`[dry-run] eval ${ev.id}: workspace + ${fixtures} fixture(s); claude -p --verbose --output-format stream-json --permission-mode acceptEdits --allowedTools ${EXECUTOR_TOOLS} --append-system-prompt <${skillName}/SKILL.md> < prompt-on-stdin`);
       continue;
     }
     const workspace = materializeWorkspace(ev);
     console.log(`eval ${ev.id}: executing in ${workspace} ...`);
     // stream-json + verbose captures the full execution trace, tool calls
     // included, so grading judges observed behavior, not self-reporting.
+    // An explicit permission mode + tool allowlist lets the agent actually
+    // edit files and run commands in the throwaway workspace; without it,
+    // headless denials would force the exact narrate-instead-of-perform
+    // failure mode that trace grading exists to catch.
     const trace = execFileSync(
       'claude',
       ['-p', '--verbose', '--output-format', 'stream-json',
-        '--append-system-prompt', `Follow this skill exactly:\n\n${fs.readFileSync(skillFile, 'utf8')}`,
-        ev.prompt],
-      { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: workspace, timeout: EXECUTOR_TIMEOUT_MS },
+        '--permission-mode', 'acceptEdits',
+        '--allowedTools', EXECUTOR_TOOLS,
+        '--append-system-prompt', `Follow this skill exactly:\n\n${fs.readFileSync(skillFile, 'utf8')}`],
+      { input: ev.prompt, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: workspace, timeout: EXECUTOR_TIMEOUT_MS },
     );
     const graderPrompt = [
       'You are grading an agent execution trace against explicit expectations.',
@@ -396,7 +407,9 @@ function runBehavioral(skillName, dryRun) {
       `===TRACE START===\n${trace}\n===TRACE END===`,
       'Return ONLY JSON: {"expectations":[{"text":string,"passed":boolean,"evidence":string}],"summary":{"passed":number,"failed":number,"total":number,"pass_rate":number}}',
     ].join('\n\n');
-    const raw = execFileSync('claude', ['-p', graderPrompt], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, timeout: GRADER_TIMEOUT_MS });
+    // The trace can be megabytes; pass the grader prompt via stdin, never
+    // argv, or it would blow past the OS argument-size limit (E2BIG).
+    const raw = execFileSync('claude', ['-p'], { input: graderPrompt, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, timeout: GRADER_TIMEOUT_MS });
     const grading = parseGrading(raw);
     const base = path.join(RESULTS_DIR, `${skillName}.eval-${ev.id}`);
     if (!grading) {
