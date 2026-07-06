@@ -29,10 +29,12 @@ node scripts/run-evals.js
 
 # Tier 3 — behavioral, runs each eval through headless claude, then grades it
 node scripts/run-evals.js --behavioral test-driven-development            # spends tokens
-node scripts/run-evals.js --behavioral test-driven-development --dry-run  # prints commands only
+node scripts/run-evals.js --behavioral test-driven-development --dry-run  # prints the plan only
 ```
 
-Tier 3 writes grading output to `evals/results/` (gitignored), in skill-creator's `grading.json` shape.
+Tier 3 runs each eval in a throwaway workspace (fixtures from `files[]` are materialized out of `evals/fixtures/`), captures the full `--output-format stream-json --verbose` execution trace, and grades the **trace** (tool calls included) rather than the model's final prose, so expectations like "a failing test was run before the fix" are judged on what happened, not what was narrated. The trace is fenced as untrusted data in the grader prompt, executor and grader calls carry timeouts, and grader output is validated as JSON before being written to `evals/results/` (gitignored) in skill-creator's `grading.json` shape.
+
+Behavioral evals without fixtures carry a provisional trust level: treat their results as sanity checks, not evidence. Graduation criteria live in [#352](https://github.com/addyosmani/agent-skills/issues/352).
 
 ## Eval case format
 
@@ -46,7 +48,7 @@ One file per skill: `evals/cases/<skill-name>.json`.
       { "prompt": "Write a failing test for this bug before fixing it", "top_k": 3 }
     ],
     "negative": [
-      { "prompt": "Update the architecture diagram in the docs" }
+      { "prompt": "Update the architecture diagram in the docs", "owner": "documentation-and-adrs" }
     ]
   },
   "evals": [
@@ -58,21 +60,23 @@ One file per skill: `evals/cases/<skill-name>.json`.
         "A failing test is written and shown failing before the fix",
         "The implementation is the minimum needed to pass",
         "The full suite is run after the fix to catch regressions"
-      ]
+      ],
+      "trust_level": "provisional"
     }
   ]
 }
 ```
 
 - `evals[]` is skill-creator's schema exactly (`id`, `prompt`, `expected_output`, optional `files[]`, `expectations[]`). Expectations are verifiable statements a grader checks against the transcript — behaviors, not phrasings.
-- `trigger` is this repo's extension. `positive` prompts are realistic user asks that should route here (`top_k` defaults to 3; tighten to 1 for a skill's signature ask). `negative` prompts belong to a *different* skill; this skill must not rank first for them.
+- `trigger` is this repo's extension. `positive` prompts are realistic user asks that should route here (`top_k` defaults to 3; tighten to 1 for a skill's signature ask). `negative` prompts belong to a *different* skill; this skill must not rank first for them. Declare that skill in `owner` where you can: the runner then asserts the owner **outranks** this skill, turning the negative into a real pairwise routing test instead of one that can pass vacuously when the prompt matches nothing.
+- `trust_level: "provisional"` marks a behavioral eval with no fixtures yet; the behavioral runner flags these and their pass rates should not be cited as evidence (see [#352](https://github.com/addyosmani/agent-skills/issues/352)).
 
 **Writing good trigger prompts:** paraphrase how users actually talk; don't copy the description (that's gaming the eval). If a realistic prompt can't rank because the description lacks its vocabulary, that is a real finding — improve the description.
 
 ## Adding a skill
 
-Every skill ships with an eval file. When you add `skills/<name>/`, add `evals/cases/<name>.json` with at least 3 positive triggers, 2 negative triggers, and 1 behavioral eval. The runner currently reports missing eval files as warnings; this will become an error once the backlog of in-flight skill PRs clears.
+Every skill ships with an eval file. When you add `skills/<name>/`, add `evals/cases/<name>.json` with at least 3 positive triggers, 2 negative triggers, and 1 behavioral eval; the runner warns when a file is below those minimums or missing entirely. Both checks are warning-level during the transition window and will be promoted to errors via [#352](https://github.com/addyosmani/agent-skills/issues/352).
 
 ## Metrics to watch
 
-The Tier-2 run prints a **trigger rank-1 rate** (share of positive prompts that rank their skill first, not merely top-k). It isn't gated, but falling numbers mean descriptions are drifting toward each other. The collision check errors at ≥75% pairwise description similarity and warns at ≥50%.
+The Tier-2 run prints a **trigger rank-1 rate** (share of positive prompts that rank their skill first, not merely top-k). It isn't gated yet; a `--min-rank1` CI ratchet is planned once the baseline stabilizes ([#352](https://github.com/addyosmani/agent-skills/issues/352)). Falling numbers mean descriptions are drifting toward each other. The collision check errors at ≥75% pairwise description similarity and warns at ≥50%. Known description-vocabulary gaps surfaced by these evals are tracked in [#351](https://github.com/addyosmani/agent-skills/issues/351).
