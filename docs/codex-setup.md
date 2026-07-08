@@ -24,7 +24,7 @@ After install, invoke a skill in Codex chat with `@` (e.g. `@spec-driven-develop
 
 ## How it works
 
-- `.codex-plugin/plugin.json` — Codex plugin manifest at the repo root. Points `skills` at `./skills/`.
+- `.codex-plugin/plugin.json` — Codex plugin manifest at the repo root. Points `skills` at `./skills/` and declares an empty Codex hook config so Codex does not auto-load Claude-oriented hooks from `hooks/hooks.json`.
 - `.agents/plugins/marketplace.json` — marketplace entry declaring the repo root (`./`) as the plugin source.
 - `skills/<name>/SKILL.md` — unchanged. Codex and Claude Code share the same `name` + `description` frontmatter format, so one file serves both platforms.
 

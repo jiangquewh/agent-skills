@@ -10,6 +10,9 @@
   "repository": "https://github.com/addyosmani/agent-skills",
   "license": "MIT",
   "skills": "./skills/",
+  "hooks": {
+    "hooks": {}
+  },
   "interface": {
     "displayName": "Agent Skills",
     "shortDescription": "Senior-engineer workflows for AI coding agents: spec, plan, build, test, review, ship.",
