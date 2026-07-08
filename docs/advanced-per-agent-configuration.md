@@ -1,6 +1,6 @@
 # Advanced per-agent configuration
 
-Skills in this repository are intentionally portable. Every `SKILL.md` keeps its frontmatter limited to the fields the Agent Skills specification defines, so the same file works across Claude Code, Cursor, Gemini CLI, Antigravity, and any other spec-conformant client.
+Skills in this repository are intentionally portable. Every `SKILL.md` keeps its frontmatter limited to the fields the [Agent Skills specification](https://agentskills.io) defines, so the same file works across Claude Code, Cursor, Gemini CLI, Antigravity, and any other spec-conformant client.
 
 Several agents also support extra runtime controls: model routing, tool restrictions, turn limits, execution isolation. These controls are valuable, but they are vendor-specific and do not belong in the shared, portable frontmatter. This document explains which controls each agent supports, where they belong, and how to apply them as an opt-in without breaking portability.
 
@@ -23,12 +23,12 @@ This is the canonical reference for per-agent configuration, and it supersedes t
 
 ## Claude Code
 
-Claude Code reads `name` and `description` for discovery. Slash commands under `.claude/commands/*.md` support an extra `context` field.
+Claude Code reads `name` and `description` for discovery. Custom commands and skills share the same frontmatter, so the `context` and `allowed-tools` fields below work in both `.claude/commands/*.md` and `.claude/skills/*/SKILL.md`.
 
-- **`context: fork`** runs a command or skill in an isolated subagent context instead of the active conversation. This gives context isolation, repeatable execution from a clean state, execution tokens spent in the fork rather than the main session, and a cleaner handoff where only the result surfaces back.
+- **`context: fork`** runs a command or skill in an isolated subagent context instead of the active conversation. This gives context isolation, repeatable execution from a clean state, execution tokens spent in the fork rather than the main session, and a cleaner handoff where only the result surfaces back. An optional **`agent`** field selects which subagent type runs the fork (for example `agent: Plan`); it defaults to `general-purpose`.
 - **`allowed-tools`** restricts the tool set available during a command, supporting least-privilege for passive stages such as review or audit.
 
-These are Claude Code conventions. Apply them in your own `.claude/commands/` copies rather than in the shared `SKILL.md` files.
+These are Claude Code conventions. Keep the shared, published `SKILL.md` limited to spec fields; apply these runtime controls in your own local command or skill copies instead.
 
 ## Gemini CLI and Antigravity
 
@@ -66,4 +66,4 @@ Generation also lets the tooling validate **semantics, not just shape**: confirm
 
 ## Status
 
-This document consolidates the discussion from [#272](https://github.com/addyosmani/agent-skills/pull/272) and [#36](https://github.com/addyosmani/agent-skills/pull/36), both closed in favor of this approach. It is the single reference for per-agent configuration: it keeps the shared skills portable while documenting the advanced controls each agent offers as an opt-in. The script-based automation described above is a proposal pending agreement before any implementation.
+This document consolidates the discussion from [#272](https://github.com/addyosmani/agent-skills/pull/272), [#36](https://github.com/addyosmani/agent-skills/pull/36), and [#35](https://github.com/addyosmani/agent-skills/issues/35), all closed in favor of this approach. It is the single reference for per-agent configuration: it keeps the shared skills portable while documenting the advanced controls each agent offers as an opt-in. The script-based automation described above is a proposal pending agreement before any implementation.
