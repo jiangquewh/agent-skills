@@ -1,12 +1,15 @@
 {
   "name": "agent-skills",
+  "interface": {
+    "displayName": "Agent Skills"
+  },
   "plugins": [
     {
       "name": "agent-skills",
       "description": "Production-grade engineering skills covering every phase of software development: spec, plan, build, verify, review, and ship.",
       "source": {
         "source": "local",
-        "path": "./codex"
+        "path": "./"
       },
       "policy": {
         "installation": "AVAILABLE",

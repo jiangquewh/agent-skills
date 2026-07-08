@@ -161,12 +161,13 @@ Use agent definitions from `agents/` as Copilot personas and skill content in `.
 <details>
 <summary><b>Codex</b></summary>
 
-Install directly via the Codex plugin marketplace (Codex CLI v0.122+):
+Install as a native Codex plugin (Codex CLI v0.122+):
 
 ```bash
 codex plugin marketplace add addyosmani/agent-skills
 ```
-Once installed, invoke skills in chat using @ (e.g., @spec-driven-development). See [docs/codex-setup.md](docs/codex-setup.md) for local installation and troubleshooting.
+
+Codex reads the root `skills/` directory directly through `.codex-plugin/plugin.json`. Once installed, invoke skills in chat using `@` (e.g., `@spec-driven-development`). See [docs/codex-setup.md](docs/codex-setup.md) for local installation and troubleshooting.
 
 </details>
 
