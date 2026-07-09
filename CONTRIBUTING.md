@@ -64,6 +64,10 @@ The frontmatter fields above are required. The section anatomy is a recommended 
 - Preserve the existing structure and tone
 - Test that YAML frontmatter remains valid after edits
 
+## Repo-scoped files
+
+`AGENTS.md` and `CLAUDE.md` at the repo root configure agents working on the [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills) repository itself. When writing setup guides or docs, do not instruct users to copy these files into their own projects or into a global agent configuration; the reusable assets are the skills in `skills/`.
+
 ## Testing Hooks
 
 The session-start hook (`hooks/session-start.sh`) injects the `using-agent-skills` meta-skill into every new Claude Code session. A regression test at `hooks/session-start-test.sh` validates the hook's JSON payload — both when `jq` is available and when it isn't.
