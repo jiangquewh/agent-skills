@@ -31,13 +31,15 @@
       "id": 1,
       "prompt": "Refine this vague idea: 'some kind of tool that helps teams share knowledge better'.",
       "expected_output": "Sharpening questions, distinct directions, surfaced assumptions, and a one-pager with MVP scope and a Not Doing list",
+      "files": [
+        "idea-refine"
+      ],
       "expectations": [
         "Sharpening questions are asked before converging",
         "Hidden assumptions are surfaced explicitly",
         "The output includes an explicit Not Doing list",
         "The agent pushes back on weak aspects instead of only agreeing"
-      ],
-      "trust_level": "provisional"
+      ]
     }
   ]
 }

@@ -47,7 +47,7 @@ const GRADER_TIMEOUT_MS = 5 * 60 * 1000;
 // auto-accepted (acceptEdits) and these tools are pre-approved so the agent
 // can perform the skill instead of narrating it. Tier 3 is opt-in and spends
 // tokens; review this list if your fixtures invoke anything unusual.
-const EXECUTOR_TOOLS = 'Read,Glob,Grep,Edit,Write,Bash';
+const EXECUTOR_TOOLS = 'Read,Glob,Grep,Edit,Write,Bash,WebFetch,WebSearch';
 
 // Required minimums per case file (evals/README.md).
 const MIN_POSITIVE = 3;
@@ -373,6 +373,7 @@ function materializeWorkspace(ev) {
   // Fresh throwaway project dir per eval; fixtures (if any) copied in so the
   // agent has real code to operate on rather than describing what it would do.
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-skills-eval-'));
+  const setupDirs = new Set();
   for (const rel of ev.files || []) {
     const src = resolveFixturePath(FIXTURES_DIR, rel);
     if (!fs.existsSync(src)) {
@@ -381,15 +382,31 @@ function materializeWorkspace(ev) {
     const dest = resolveFixturePath(workspace, rel);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.cpSync(src, dest, { recursive: true });
+    const fixtureRoot = fs.statSync(dest).isDirectory() ? dest : path.dirname(dest);
+    setupDirs.add(path.join(fixtureRoot, '.eval'));
+  }
+  const workingTreePatches = [];
+  for (const setupDir of setupDirs) {
+    const patchFile = path.join(setupDir, 'working-tree.patch');
+    if (fs.existsSync(patchFile)) workingTreePatches.push(fs.readFileSync(patchFile, 'utf8'));
+    if (fs.existsSync(setupDir)) fs.rmSync(setupDir, { recursive: true, force: true });
   }
   // Give workflow-oriented evals a real baseline to inspect, modify, diff, and
   // commit. A local identity keeps this deterministic and never leaves the
   // throwaway workspace.
   execFileSync('git', ['init', '--quiet'], { cwd: workspace });
+  execFileSync('git', ['config', 'core.autocrlf', 'false'], { cwd: workspace });
   execFileSync('git', ['config', 'user.name', 'Skill Eval'], { cwd: workspace });
   execFileSync('git', ['config', 'user.email', 'skill-eval@example.invalid'], { cwd: workspace });
   execFileSync('git', ['add', '--all'], { cwd: workspace });
   execFileSync('git', ['commit', '--quiet', '-m', 'fixture baseline'], { cwd: workspace });
+  for (const workingTreePatch of workingTreePatches) {
+    execFileSync('git', ['apply', '--whitespace=nowarn', '-'], {
+      cwd: workspace,
+      input: workingTreePatch,
+      encoding: 'utf8',
+    });
+  }
   return workspace;
 }
 
@@ -480,24 +497,29 @@ function runBehavioral(skillName, dryRun) {
 
 // ---------- main ----------
 
-const args = process.argv.slice(2);
-const bIdx = args.indexOf('--behavioral');
-const rankIdx = args.indexOf('--min-rank1');
-let minRank1 = null;
-if (rankIdx !== -1) {
-  const raw = args[rankIdx + 1];
-  minRank1 = Number(raw);
-  if (raw === undefined || raw === '' || !Number.isFinite(minRank1) || minRank1 < 0 || minRank1 > 100) {
-    console.error('--min-rank1 must be a number from 0 to 100');
-    process.exit(1);
+function main(args = process.argv.slice(2)) {
+  const bIdx = args.indexOf('--behavioral');
+  const rankIdx = args.indexOf('--min-rank1');
+  let minRank1 = null;
+  if (rankIdx !== -1) {
+    const raw = args[rankIdx + 1];
+    minRank1 = Number(raw);
+    if (raw === undefined || raw === '' || !Number.isFinite(minRank1) || minRank1 < 0 || minRank1 > 100) {
+      console.error('--min-rank1 must be a number from 0 to 100');
+      process.exit(1);
+    }
+  }
+  if (bIdx !== -1) {
+    if (minRank1 !== null) {
+      console.error('--min-rank1 applies only to deterministic evals');
+      process.exit(1);
+    }
+    runBehavioral(args[bIdx + 1], args.includes('--dry-run'));
+  } else {
+    runDeterministic(minRank1);
   }
 }
-if (bIdx !== -1) {
-  if (minRank1 !== null) {
-    console.error('--min-rank1 applies only to deterministic evals');
-    process.exit(1);
-  }
-  runBehavioral(args[bIdx + 1], args.includes('--dry-run'));
-} else {
-  runDeterministic(minRank1);
-}
+
+if (require.main === module) main();
+
+module.exports = { materializeWorkspace };

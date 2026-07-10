@@ -37,7 +37,7 @@ Every new skill must have:
 
 - `SKILL.md` in the skill directory
 - YAML frontmatter with valid `name` and `description`
-- An eval case file at `evals/cases/<skill-name>.json` — at least 3 positive triggers, 2 negative triggers (with `owner` where possible), and 1 behavioral eval (see [evals/README.md](evals/README.md); warning-level until promoted via [#352](https://github.com/addyosmani/agent-skills/issues/352))
+- An eval case file at `evals/cases/<skill-name>.json` — at least 3 positive triggers, 2 negative triggers (with `owner` where possible), and 1 behavioral eval backed by real files under `evals/fixtures/` (see [evals/README.md](evals/README.md)). CI enforces these requirements.
 
 New skills should generally follow the standard anatomy:
 

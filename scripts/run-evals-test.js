@@ -8,6 +8,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const test = require('node:test');
+const { materializeWorkspace } = require('./run-evals');
 
 const RUNNER = path.join(__dirname, 'run-evals.js');
 
@@ -140,4 +141,19 @@ test('rejects an invalid rank-1 floor', () => {
 
   assert.equal(result.status, 1, result.stdout + result.stderr);
   assert.match(result.stderr, /--min-rank1 must be a number from 0 to 100/);
+});
+
+test('materializes a git baseline and applies a working-tree patch', () => {
+  const workspace = materializeWorkspace({ files: ['git-workflow-and-versioning'] });
+  try {
+    const status = spawnSync('git', ['status', '--short'], { cwd: workspace, encoding: 'utf8' });
+    const commits = spawnSync('git', ['rev-list', '--count', 'HEAD'], { cwd: workspace, encoding: 'utf8' });
+
+    assert.equal(status.status, 0, status.stdout + status.stderr);
+    assert.match(status.stdout, / M git-workflow-and-versioning\/app\.js/);
+    assert.equal(commits.stdout.trim(), '1');
+    assert.equal(fs.existsSync(path.join(workspace, '.eval')), false);
+  } finally {
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
 });
