@@ -12,7 +12,9 @@
  *       overlapping skills drifting in.
  *     - Coverage + schema: every case file maps to a real skill, skill_name
  *       matches, and behavioral evals follow the skill-creator evals.json shape.
- *       Skills without a case file are reported as warnings (not errors, yet).
+ *       Every skill must have a complete case file backed by real fixtures.
+ *     - Rank-1 ratchet: --min-rank1 <pct> fails when routing quality drops
+ *       below the checked-in CI baseline.
  *   Tier 3 (opt-in, costs tokens, never in CI):
  *     node scripts/run-evals.js --behavioral <skill> [--dry-run]
  *     Runs each behavioral eval through headless `claude` in a throwaway
@@ -47,7 +49,7 @@ const GRADER_TIMEOUT_MS = 5 * 60 * 1000;
 // tokens; review this list if your fixtures invoke anything unusual.
 const EXECUTOR_TOOLS = 'Read,Glob,Grep,Edit,Write,Bash';
 
-// Documented minimums per case file (evals/README.md). Warning-level for now.
+// Required minimums per case file (evals/README.md).
 const MIN_POSITIVE = 3;
 const MIN_NEGATIVE = 2;
 const MIN_EVALS = 1;
@@ -193,7 +195,7 @@ function resolveFixturePath(root, rel) {
 
 // ---------- tier 2 ----------
 
-function runDeterministic() {
+function runDeterministic(minRank1) {
   const skills = loadSkills();
   const cases = loadCases();
   const corpus = buildCorpus(skills);
@@ -210,8 +212,8 @@ function runDeterministic() {
   // Coverage
   for (const s of skills) {
     if (!cases.some((c) => c.file === `${s.name}.json`)) {
-      console.log(`  ⚠  ${s.name}: no eval case file (evals/cases/${s.name}.json)`);
-      warnings++;
+      console.log(`  ✗  ${s.name}: no eval case file (evals/cases/${s.name}.json)`);
+      errors++;
     }
   }
 
@@ -244,6 +246,29 @@ function runDeterministic() {
         ev.expectations.every((x) => typeof x === 'string');
       if (!shapeOk) {
         console.log(`  ✗  ${c.file}: eval id=${ev.id} does not match evals.json schema`);
+        errors++;
+      }
+      if (!Array.isArray(ev.files) || ev.files.length === 0 || !ev.files.every((x) => typeof x === 'string')) {
+        console.log(`  ✗  ${c.file}: eval id=${ev.id} needs a non-empty files[] fixture list`);
+        errors++;
+      } else {
+        for (const rel of ev.files) {
+          let fixture;
+          try {
+            fixture = resolveFixturePath(FIXTURES_DIR, rel);
+          } catch (e) {
+            console.log(`  ✗  ${c.file}: eval id=${ev.id} has invalid fixture path "${rel}" — ${e.message}`);
+            errors++;
+            continue;
+          }
+          if (!fs.existsSync(fixture)) {
+            console.log(`  ✗  ${c.file}: eval id=${ev.id} fixture not found: evals/fixtures/${rel}`);
+            errors++;
+          }
+        }
+      }
+      if (ev.trust_level === 'provisional') {
+        console.log(`  ✗  ${c.file}: eval id=${ev.id} is still provisional; add real fixtures before trusting it`);
         errors++;
       }
     }
@@ -303,13 +328,13 @@ function runDeterministic() {
       if (ok) passed++;
     }
 
-    // Documented minimums (warning-level during the transition window)
+    // Required minimums
     const pc = (d.trigger?.positive || []).length;
     const nc = (d.trigger?.negative || []).length;
     const ec = (d.evals || []).length;
     if (pc < MIN_POSITIVE || nc < MIN_NEGATIVE || ec < MIN_EVALS) {
-      console.log(`  ⚠  ${expected}: below documented minimums (${pc} positive/${nc} negative/${ec} behavioral; need ${MIN_POSITIVE}/${MIN_NEGATIVE}/${MIN_EVALS})`);
-      warnings++;
+      console.log(`  ✗  ${expected}: below required minimums (${pc} positive/${nc} negative/${ec} behavioral; need ${MIN_POSITIVE}/${MIN_NEGATIVE}/${MIN_EVALS})`);
+      errors++;
     }
   }
 
@@ -330,7 +355,12 @@ function runDeterministic() {
     }
   }
 
-  const rate = positives ? ((rank1 / positives) * 100).toFixed(0) : 'n/a';
+  const rank1Rate = positives ? (rank1 / positives) * 100 : 0;
+  const rate = positives ? rank1Rate.toFixed(0) : 'n/a';
+  if (minRank1 !== null && (!positives || rank1Rate < minRank1)) {
+    console.log(`  ✗  trigger rank-1 rate ${rate}% is below required ${minRank1}%`);
+    errors++;
+  }
   console.log(`\n${passed} checks passed — ${errors} error(s), ${warnings} warning(s)`);
   console.log(`trigger rank-1 rate: ${rate}% (${rank1}/${positives} positive prompts rank their skill first)`);
   console.log(errors ? 'FAILED' : 'PASSED');
@@ -352,6 +382,14 @@ function materializeWorkspace(ev) {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.cpSync(src, dest, { recursive: true });
   }
+  // Give workflow-oriented evals a real baseline to inspect, modify, diff, and
+  // commit. A local identity keeps this deterministic and never leaves the
+  // throwaway workspace.
+  execFileSync('git', ['init', '--quiet'], { cwd: workspace });
+  execFileSync('git', ['config', 'user.name', 'Skill Eval'], { cwd: workspace });
+  execFileSync('git', ['config', 'user.email', 'skill-eval@example.invalid'], { cwd: workspace });
+  execFileSync('git', ['add', '--all'], { cwd: workspace });
+  execFileSync('git', ['commit', '--quiet', '-m', 'fixture baseline'], { cwd: workspace });
   return workspace;
 }
 
@@ -389,8 +427,10 @@ function runBehavioral(skillName, dryRun) {
 
   for (const ev of d.evals) {
     const fixtures = (ev.files || []).length;
-    if (ev.trust_level === 'provisional' || !fixtures) {
-      console.log(`  note: eval ${ev.id} is provisional (${fixtures ? 'flagged' : 'no fixtures'}) — results are a sanity check, not evidence`);
+    if (!fixtures) {
+      console.error(`eval ${ev.id} has no fixtures; run the deterministic eval gate first`);
+      failures++;
+      continue;
     }
     if (dryRun) {
       console.log(`[dry-run] eval ${ev.id}: workspace + ${fixtures} fixture(s); claude -p --verbose --output-format stream-json --permission-mode acceptEdits --allowedTools ${EXECUTOR_TOOLS} --append-system-prompt <${skillName}/SKILL.md> < prompt-on-stdin`);
@@ -442,8 +482,22 @@ function runBehavioral(skillName, dryRun) {
 
 const args = process.argv.slice(2);
 const bIdx = args.indexOf('--behavioral');
+const rankIdx = args.indexOf('--min-rank1');
+let minRank1 = null;
+if (rankIdx !== -1) {
+  const raw = args[rankIdx + 1];
+  minRank1 = Number(raw);
+  if (raw === undefined || raw === '' || !Number.isFinite(minRank1) || minRank1 < 0 || minRank1 > 100) {
+    console.error('--min-rank1 must be a number from 0 to 100');
+    process.exit(1);
+  }
+}
 if (bIdx !== -1) {
+  if (minRank1 !== null) {
+    console.error('--min-rank1 applies only to deterministic evals');
+    process.exit(1);
+  }
   runBehavioral(args[bIdx + 1], args.includes('--dry-run'));
 } else {
-  runDeterministic();
+  runDeterministic(minRank1);
 }
