@@ -121,10 +121,13 @@ Never discover dependency lifecycle scripts by first executing an ordinary insta
 3. Record the narrowest native allow/deny policy at the installation boundary and commit it.
 4. Run a clean frozen/immutable install with that policy and verify the required packages still build.
 
+**Point-in-time snapshot:** Package-manager defaults and command names change quickly. Verify this matrix against the pinned client's current official documentation before relying on it.
+
 | Manager version | Native policy |
 |---|---|
-| npm 11.18 | Treat unreviewed scripts as allow-with-warning unless `strict-allow-scripts=true` is already enforced; otherwise bootstrap with `npm ci --ignore-scripts`. From the installation boundary, use the workspace-unaware `npm install-scripts ls`, keep approvals version-pinned, and record denials name-wide. |
-| Older or unknown npm | Bootstrap with `npm ci --ignore-scripts`. Keep scripts disabled unless the pinned version documents an enforceable policy and each required script has been reviewed. |
+| npm without verified granular approvals | Bootstrap with `npm ci --ignore-scripts`, or persist `ignore-scripts=true` when project-wide blocking is intended. Keep scripts disabled or deliberately upgrade before allowing any reviewed dependency script. |
+| npm 11.18.x (verified on 11.18.0) | Unreviewed dependency scripts run with a warning by default. Enforce `strict-allow-scripts=true` before a normal install, then use the workspace-unaware `npm install-scripts ls` from the installation boundary; keep approvals version-pinned and denials name-wide. |
+| npm 12.x (verified on 12.0.1) | Unreviewed dependency scripts are skipped by default; `strict-allow-scripts=true` makes their presence fail the install before execution. Use the same `npm install-scripts` review and approval flow. |
 | pnpm 11+ | Use `pnpm approve-builds` and commit `allowBuilds` decisions; `strictDepBuilds` defaults to `true`, so unreviewed builds fail. |
 | pnpm 10.26–10.x | Configure `allowBuilds` explicitly, or use `pnpm approve-builds` with the legacy `onlyBuiltDependencies` / `ignoredBuiltDependencies` lists. Set `strictDepBuilds: true`; its v10 default is `false`. |
 | pnpm 10.1–10.25 | `pnpm approve-builds` records the legacy lists; enable `strictDepBuilds` where supported (10.3+). |
@@ -133,7 +136,7 @@ Never discover dependency lifecycle scripts by first executing an ordinary insta
 | Yarn 2–4.13 | Set `enableScripts: false` in `.yarnrc.yml`, then grant only required exceptions with top-level `dependenciesMeta.<package>.built: true`; do not enable scripts globally. |
 | Yarn 1 | Bootstrap with `yarn install --ignore-scripts`; keep scripts disabled unless each required exception is reviewed under the pinned client's documented workflow. |
 
-These controls are version-sensitive. Verify them against the official [npm install-scripts](https://docs.npmjs.com/cli/v11/commands/npm-install-scripts/) and [install](https://docs.npmjs.com/cli/v11/commands/npm-install/) docs, [pnpm approve-builds](https://pnpm.io/cli/approve-builds) and [build settings](https://pnpm.io/settings#allowbuilds), or [Yarn security](https://yarnpkg.com/features/security) and [manifest](https://yarnpkg.com/configuration/manifest#dependenciesMeta) guidance before changing policy.
+Authoritative checks: [npm install-scripts](https://docs.npmjs.com/cli/v11/commands/npm-install-scripts/), [install policy](https://docs.npmjs.com/cli/v11/commands/npm-install/), and [CLI releases](https://github.com/npm/cli/releases); [pnpm approve-builds](https://pnpm.io/cli/approve-builds) and [build settings](https://pnpm.io/settings#allowbuilds); [Yarn security](https://yarnpkg.com/features/security) and [manifest](https://yarnpkg.com/configuration/manifest#dependenciesMeta).
 
 **Supply-chain hygiene** (advisory audits do not catch newly malicious packages):
 - [ ] Exactly one authoritative lockfile per project/workspace root is committed and CI never rewrites it
