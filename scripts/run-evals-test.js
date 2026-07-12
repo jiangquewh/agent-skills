@@ -109,6 +109,83 @@ test('fails when a behavioral eval references a missing fixture', () => {
   assert.match(result.stdout, /fixture not found/);
 });
 
+test('requires fixtures for execution evals', () => {
+  const root = makeSandbox();
+  writeSkill(root, 'alpha-skill', 'Handles alpha widgets. Use when changing alpha widgets.');
+  writeJson(
+    path.join(root, 'evals', 'cases', 'alpha-skill.json'),
+    completeCase('alpha-skill', 'change alpha widget', 1, []),
+  );
+
+  const result = run(root);
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /needs a non-empty files\[\] fixture list/);
+});
+
+test('allows dialogue evals without fixtures', () => {
+  const root = makeSandbox();
+  writeSkill(root, 'alpha-skill', 'Handles alpha widgets. Use when changing alpha widgets.');
+  const evalCase = completeCase('alpha-skill', 'change alpha widget');
+  evalCase.evals = [{ ...behavioralEval([]), kind: 'dialogue' }];
+  writeJson(path.join(root, 'evals', 'cases', 'alpha-skill.json'), evalCase);
+
+  const result = run(root);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test('rejects provisional execution evals', () => {
+  const root = makeSandbox();
+  writeSkill(root, 'alpha-skill', 'Handles alpha widgets. Use when changing alpha widgets.');
+  const evalCase = completeCase('alpha-skill', 'change alpha widget');
+  evalCase.evals[0].trust_level = 'provisional';
+  writeJson(path.join(root, 'evals', 'cases', 'alpha-skill.json'), evalCase);
+
+  const result = run(root);
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /is still provisional/);
+});
+
+test('allows dialogue evals with a legacy provisional marker', () => {
+  const root = makeSandbox();
+  writeSkill(root, 'alpha-skill', 'Handles alpha widgets. Use when changing alpha widgets.');
+  const evalCase = completeCase('alpha-skill', 'change alpha widget');
+  evalCase.evals = [{ ...behavioralEval([]), kind: 'dialogue', trust_level: 'provisional' }];
+  writeJson(path.join(root, 'evals', 'cases', 'alpha-skill.json'), evalCase);
+
+  const result = run(root);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test('rejects unknown behavioral eval kinds', () => {
+  const root = makeSandbox();
+  writeSkill(root, 'alpha-skill', 'Handles alpha widgets. Use when changing alpha widgets.');
+  const evalCase = completeCase('alpha-skill', 'change alpha widget');
+  evalCase.evals[0].kind = 'conversation';
+  writeJson(path.join(root, 'evals', 'cases', 'alpha-skill.json'), evalCase);
+
+  const result = run(root);
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /unknown kind "conversation"/);
+});
+
+test('dry-runs a fixtureless dialogue eval', () => {
+  const root = makeSandbox();
+  writeSkill(root, 'alpha-skill', 'Handles alpha widgets. Use when changing alpha widgets.');
+  const evalCase = completeCase('alpha-skill', 'change alpha widget');
+  evalCase.evals = [{ ...behavioralEval([]), kind: 'dialogue' }];
+  writeJson(path.join(root, 'evals', 'cases', 'alpha-skill.json'), evalCase);
+
+  const result = run(root, ['--behavioral', 'alpha-skill', '--dry-run']);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /dialogue transcript/);
+});
+
 test('enforces the configured rank-1 floor', () => {
   const root = makeSandbox();
   writeSkill(root, 'alpha-skill', 'Handles widget work. Use when implementing widget changes.');

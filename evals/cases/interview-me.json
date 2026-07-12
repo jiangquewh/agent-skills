@@ -29,11 +29,9 @@
   "evals": [
     {
       "id": 1,
+      "kind": "dialogue",
       "prompt": "I want 'a better admin page'. Interview me before proposing anything.",
       "expected_output": "A one-question-at-a-time interview that converges on validated requirements",
-      "files": [
-        "interview-me"
-      ],
       "expectations": [
         "Questions are asked one at a time, not in batches",
         "The agent does not propose solutions before understanding the need",

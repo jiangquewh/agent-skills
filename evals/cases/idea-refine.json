@@ -29,11 +29,9 @@
   "evals": [
     {
       "id": 1,
+      "kind": "dialogue",
       "prompt": "Refine this vague idea: 'some kind of tool that helps teams share knowledge better'.",
       "expected_output": "Sharpening questions, distinct directions, surfaced assumptions, and a one-pager with MVP scope and a Not Doing list",
-      "files": [
-        "idea-refine"
-      ],
       "expectations": [
         "Sharpening questions are asked before converging",
         "Hidden assumptions are surfaced explicitly",
