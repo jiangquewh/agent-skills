@@ -2,6 +2,8 @@
 
 Thanks for your interest in contributing! This project is a collection of production-grade engineering skills for AI coding agents.
 
+New here? [docs/developer-onboarding.md](docs/developer-onboarding.md) is a guided tour of how the repo fits together (the five layers, the verification loop, and the contribution paths) and tells you when to read this document, [skill-anatomy.md](docs/skill-anatomy.md), and [evals/README.md](evals/README.md). This file is the authoritative rulebook; the onboarding guide is the map.
+
 ## Adding a New Skill
 
 ### Before proposing a new skill
