@@ -85,14 +85,9 @@ Run the relevant subset before every PR. A PR that arrives green through Tier 1 
 
 The catalog already covers most of the lifecycle, so the burden of proof is on the gap. Before writing anything, run the pre-flight checks in [CONTRIBUTING.md](../CONTRIBUTING.md#before-proposing-a-new-skill): search the catalog, check open PRs (`gh pr list --state open`; near-duplicate clusters already exist), confirm the idea fits [skill-anatomy.md](skill-anatomy.md), and justify the gap explicitly in your PR description. If it overlaps an existing skill, a focused edit to that skill beats a new directory.
 
-A new skill ships as a set, not a file:
+A new skill ships as a set, not a single file: the `skills/<kebab-case-name>/SKILL.md`, a matching `evals/cases/<name>.json`, and a `scripts/` directory only when it ships runnable helpers (reference material goes in `references/`, never inside the skill). The exact frontmatter rules, the section anatomy, and the eval-case minimums live in [CONTRIBUTING.md](../CONTRIBUTING.md#structure) and [skill-anatomy.md](skill-anatomy.md); take them from there rather than this tour, so the two can't drift.
 
-- `skills/<kebab-case-name>/SKILL.md` with valid frontmatter (`name` matching the directory, `description` starting with what it does in third person plus "Use when…" triggers, ≤1024 chars)
-- The recommended section anatomy: Overview, When to Use, Process, Common Rationalizations, Red Flags, Verification (equivalent headings are fine if they preserve the intent)
-- `evals/cases/<name>.json` with at least 3 positive triggers, 2 negative triggers (with `owner` where possible), and 1 behavioral eval
-- `scripts/` inside the skill directory **only** if it ships runnable helpers; reference material goes in `references/`, never inside the skill
-
-When writing trigger prompts, paraphrase how users actually talk; copying the description into the prompts games the eval and tells you nothing.
+One point worth internalizing rather than looking up: when writing trigger prompts, paraphrase how users actually talk; copying the description into the prompts games the eval and tells you nothing.
 
 ### Path 3: Docs, references, harness
 
