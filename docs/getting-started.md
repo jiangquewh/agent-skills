@@ -41,6 +41,8 @@ Start with the `using-agent-skills` skill loaded. It contains a flowchart that m
 
 ## Recommended Setup
 
+Rolling out to a real project? The **[Adoption Guide](adoption-guide.md)** covers two end-to-end paths: the full lifecycle from day one for a greenfield project, and an incremental, verification-first rollout for an established codebase. The setup below is the quick version.
+
 ### Minimal (Start here)
 
 Load three essential skills into your rules file:
