@@ -187,6 +187,12 @@ Skills are plain Markdown - they work with any agent that accepts system prompts
 
 ---
 
+## Adoption
+
+Already installed? How you roll the pack out depends on your codebase. The **[Adoption Guide](docs/adoption-guide.md)** covers two paths: the full lifecycle from day one for a greenfield project, or an incremental, verification-first rollout for an established codebase.
+
+---
+
 ## All 24 Skills
 
 The commands above are entry points. The pack includes 24 skills total — 23 lifecycle skills plus the `using-agent-skills` meta-skill. Each skill is a structured workflow with steps, verification gates, and anti-rationalization tables. You can also reference any skill directly.
