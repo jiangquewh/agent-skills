@@ -115,7 +115,7 @@ This is a pack-level design choice. The Agent Skills spec describes a skill as a
 
 The tradeoff is portability: a whole-repo install (such as the Claude Code marketplace plugin) carries `references/` along, but a per-skill install that copies only `skills/<name>/` leaves the repo-root sibling behind, and those links resolve to nothing. That gap is tracked in [#361](https://github.com/addyosmani/agent-skills/issues/361).
 
-Rule of thumb: material used by exactly one skill is a supporting file inside that skill's directory; material shared across skills goes in `references/`.
+Current convention: material used by exactly one skill is a supporting file inside that skill's directory; material shared across skills goes in `references/`.
 
 ## Context Efficiency
 
