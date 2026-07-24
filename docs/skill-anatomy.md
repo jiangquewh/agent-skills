@@ -154,7 +154,7 @@ When a skill ships runnable helpers under `scripts/`, each script follows these 
 - Skill files: `SKILL.md` (always uppercase)
 - Supporting files: `lowercase-hyphen-separated.md`
 - Shared references: stored in the root `references/` directory, not inside skill directories (see [Shared References](#shared-references) for why).
-- Skill-specific references: the emerging convention for self-contained, distributable skills is a `references/` directory inside the skill directory, so the skill carries its own supporting docs.
+- Skill-specific references: a single supporting doc can stay as a loose file in the skill directory (the `Supporting files` entry above); when several related docs travel with the skill, the emerging convention for self-contained, distributable skills is to group them in a `references/` directory inside the skill directory, so the skill carries its own supporting docs.
 
 ## Cross-Skill References
 
