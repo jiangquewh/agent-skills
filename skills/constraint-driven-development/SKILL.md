@@ -67,6 +67,7 @@ Q1: Beyond the floor, which of these do you want enforced?
     (e) Architecture boundaries
 GUESS: (a) and (b) — you have a test runner already and you're handling user input.
 DEFAULT if unsure: (a) and (b).
+Say what each pick costs: (c) and (d) need a running URL, (e) needs a rules file written.
 ```
 
 ```
@@ -108,12 +109,19 @@ Last reviewed: 2026-08-08 by @addy
 
 ## Enforced with numbers
 
-| Dimension | Rule | Runs at |
-|-----------|------|---------|
-| Coverage | New/changed lines ≥ 80% covered | task end, CI |
-| Security | No high/critical dependency vulns | CI |
-| Types | Zero type errors | every edit |
-| Lint | Zero errors from our config | every edit |
+| Dimension | Rule | Checked by | Runs at |
+|-----------|------|-----------|---------|
+| Types | Zero type errors | `tsc --noEmit` | every edit |
+| Lint | Zero errors from our config | `biome check` | every edit |
+| Secrets | No secrets in source | `gitleaks detect --redact` | every edit |
+| Coverage | Changed lines ≥ 80% covered | `vitest run --coverage` + git diff | task end, CI |
+| Security: code | No high findings | `semgrep scan --config p/default` | CI |
+| Security: deps | Nothing at high or above | `osv-scanner scan source -r .` | CI |
+| Accessibility | Zero critical or serious | `axe $PREVIEW_URL --tags wcag2a,wcag2aa,wcag21aa` | preview deploy |
+| Performance | LCP ≤ 2500ms, CLS ≤ 0.1 | `lighthouse $PREVIEW_URL --output=json` | preview deploy |
+
+Every row names the command that produces the verdict. A dimension with a
+number and no command in this column is an aspiration, not a constraint.
 
 ## Measured, not yet enforced
 
@@ -131,7 +139,49 @@ Last reviewed: 2026-08-08 by @addy
 
 Then add one line to `AGENTS.md` and `CLAUDE.md`: `Read CONSTRAINTS.md before writing code. Do not weaken it to make a change pass.`
 
-### Step 4: Wire it to the lifecycle
+### Step 4: Install what each dimension needs
+
+Picking a dimension means installing something. Don't leave the user with a number and no mechanism, and don't invent your own checker when a de facto one exists — these tools are listed because their rule formats and thresholds are what everything else in the ecosystem targets, so the team's existing config keeps working.
+
+| Dimension | Tool | Install | Run | Gate on |
+|-----------|------|---------|-----|---------|
+| Types (TS) | tsc | already there | `tsc --noEmit` | any error |
+| Types (Python) | mypy | `pip install mypy` | `mypy .` | any error |
+| Lint | your existing config | already there | `eslint .` / `biome check` / `ruff check` | any error |
+| Coverage (JS) | your test runner | already there | `vitest run --coverage` (or `jest --coverage`) | coverage of changed lines |
+| Coverage (Python) | pytest-cov | `pip install pytest-cov` | `pytest --cov --cov-report=lcov` | same |
+| Security: code | Semgrep | `pipx install semgrep` | `semgrep scan --config p/default --config p/owasp-top-ten` | any high finding |
+| Security: secrets | gitleaks | `brew install gitleaks` | `gitleaks detect --redact --no-banner` | any finding |
+| Security: dependencies | osv-scanner | `brew install osv-scanner` | `osv-scanner scan source -r .` | high or above |
+| Performance: page | Lighthouse | `npm i -D lighthouse` | `lighthouse $URL --output=json --quiet` | LCP, CLS, performance score |
+| Performance: bundle | size-limit | `npm i -D size-limit` | `size-limit --json` | per-entry byte budget |
+| Accessibility | axe-core | `npm i -D @axe-core/cli` | `axe $URL --tags wcag2a,wcag2aa,wcag21aa` | zero critical or serious |
+| Architecture | dependency-cruiser | `npm i -D dependency-cruiser` | `depcruise --validate src` | any violation |
+| Assertion quality | Stryker | `npm i -D @stryker-mutator/core` | `stryker run --mutate <changed files>` | mutation score |
+
+Five things that will bite you if you skip them:
+
+1. **`--redact` on gitleaks is not optional.** Without it the matched secret lands in the agent's transcript, which is how a leaked key ends up in a log, a summary, or a commit message. Report the rule and the location, never the value.
+2. **Lighthouse and axe need a URL.** They only work against a running app, so they belong in the runtime stage against a preview deploy or a local server you start first. If the project has no URL to hit — a CLI, a library, a desktop app — say so and drop the dimension rather than inventing a check that can't run.
+3. **Scope the expensive ones to the diff.** `stryker run --mutate` on the whole repo takes hours and gets turned off; on the files a change touched it takes under a minute. Same for Semgrep, which takes a path list.
+4. **Coverage needs no second test run.** Read the lcov your suite already writes and intersect it with `git diff`. Running the suite twice to get a number is the fastest way to make people hate this.
+5. **Semgrep's registry rules are free to run; check the licence before redistributing them.** `opengrep` is a drop-in fork with the same rule format and JSON output if that matters to your legal team.
+
+Add each one to the project's own script so it's reproducible without an agent:
+
+```json
+{
+  "scripts": {
+    "check:fast": "tsc --noEmit && eslint . && gitleaks detect --redact --no-banner",
+    "check:task": "npm run check:fast && vitest run --coverage",
+    "check:full": "npm run check:task && semgrep scan --config p/default && osv-scanner scan source -r ."
+  }
+}
+```
+
+That mapping matters more than the tools. `check:fast` is what runs after an edit, `check:task` when the agent thinks it's done, `check:full` in CI.
+
+### Step 5: Wire it to the lifecycle
 
 The single biggest mistake is running everything everywhere. A check that stalls the agent gets switched off, and a gate people switched off is worse than no gate, because the bar still looks like it exists.
 
@@ -147,7 +197,7 @@ Two rules that keep this tolerable:
 1. **Scope to the diff.** Check the lines this change touched, not the whole repo. Coverage of changed lines is a number the agent can move; project coverage is one it inherited.
 2. **Cost decides placement.** Anything over a few seconds moves out of the edit loop. Mutation testing on a whole repo takes hours; on the files a change touched it takes under a minute, which is the difference between a check people run and one they don't.
 
-### Step 5: Guard the bar itself
+### Step 6: Guard the bar itself
 
 Someone will point out that if the agent writes the code and the checks, the checks prove nothing. Half right, and worth engineering around.
 
@@ -169,7 +219,7 @@ None of this needs tooling beyond `git diff`. Tightening the bar should be silen
 
 A bar made entirely of the third kind is worth less than one with an outside opinion in it. Check that at least one external constraint is present.
 
-### Step 6: Ratchets, when you don't have a number
+### Step 7: Ratchets, when you don't have a number
 
 Set 80% coverage on a codebase at 62% and you get a red build forever, then a team that learns to ignore red builds.
 
@@ -222,6 +272,8 @@ Stop and reconsider if you notice:
 
 - The interview ran past four questions, or produced a config the user can't explain
 - A budget was set that the codebase fails today, with no plan to reach it
+- A dimension was written into CONSTRAINTS.md with a number but no tool behind it
+- A checker was hand-rolled when a de facto one exists, so the team's existing config is ignored
 - Every constraint is checked by the project's own test suite, with no external opinion
 - `CONSTRAINTS.md` changed in the same commit as the feature that was failing
 - An exception has no owner, or an expiry more than a year out
@@ -235,6 +287,7 @@ The skill was applied correctly when:
 
 - [ ] `CONSTRAINTS.md` exists, and every number in it has a stated reason
 - [ ] The floor is enforced and passes on the current codebase without changes
+- [ ] Every dimension the user picked has a tool installed and a command that runs today
 - [ ] Each constraint says where it runs, and the fast stage stays under a few seconds
 - [ ] At least one constraint is external (not judged by this project's own tests)
 - [ ] Measured-only metrics record today's value and a direction

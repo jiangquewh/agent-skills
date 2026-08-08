@@ -17,6 +17,10 @@
       {
         "prompt": "What coverage threshold should we enforce, and where should it run so it doesn't slow us down?",
         "top_k": 3
+      },
+      {
+        "prompt": "I care about accessibility and web performance — set those up as enforced constraints",
+        "top_k": 3
       }
     ],
     "negative": [
@@ -57,6 +61,18 @@
         "The agent points out that a threshold the codebase fails today produces a permanently red build",
         "It offers to record 62% and require that it not fall, as an adoptable alternative",
         "It does not silently accept 85% without noting the consequence"
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "dialogue",
+      "prompt": "Accessibility matters to us. Add it as a constraint.",
+      "expected_output": "A working accessibility check, not just a threshold written down",
+      "expectations": [
+        "The agent names axe-core and gives the install and run commands rather than only stating a violation threshold",
+        "It notes that axe needs a running URL and asks for one, or drops the dimension if the project has no URL to hit",
+        "The command that produces the verdict is recorded alongside the rule in CONSTRAINTS.md",
+        "The check is placed at the preview-deploy stage rather than in the per-edit loop"
       ]
     }
   ]
