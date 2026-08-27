@@ -26,7 +26,8 @@ This is the canonical reference for per-agent configuration, and it supersedes t
 Claude Code reads `name` and `description` for discovery. Custom commands and skills share the same frontmatter, so the `context` and `allowed-tools` fields below work in both `.claude/commands/*.md` and `.claude/skills/*/SKILL.md`.
 
 - **`context: fork`** runs a command or skill in an isolated subagent context instead of the active conversation. This gives context isolation, repeatable execution from a clean state, execution tokens spent in the fork rather than the main session, and a cleaner handoff where only the result surfaces back. An optional **`agent`** field selects which subagent type runs the fork (for example `agent: Plan`); it defaults to `general-purpose`.
-- **`allowed-tools`** restricts the tool set available during a command, supporting least-privilege for passive stages such as review or audit.
+- **`allowed-tools`** pre-approves tools; it does not restrict them. Listed tools run without a permission prompt for the turn that invokes the command or skill, and the grant clears on your next message. Nothing is removed from the tool pool.
+- **`disallowed-tools`** is the field that actually restricts: it removes the listed tools from the available pool while the skill is active, which is what least-privilege needs for passive stages such as review or audit. The restriction also clears on your next message. Note it is a Claude Code field and not one of the specification's six, so it belongs in a local copy or an adapter file; in a published `SKILL.md` it fails packaging with an unexpected-key error.
 
 These are Claude Code conventions. Keep the shared, published `SKILL.md` limited to spec fields; apply these runtime controls in your own local command or skill copies instead.
 
