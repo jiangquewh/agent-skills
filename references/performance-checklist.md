@@ -104,7 +104,7 @@ When TTFB is slow (> 800ms), check each component in DevTools Network waterfall:
 - [ ] Composite index column order is equality first, then range/sort
 - [ ] Index covers the query shape (filter + sort), not just one column in isolation
 - [ ] Covering index considered for hot read paths (index-only scan avoids the heap fetch)
-- [ ] Not indexing low-selectivity columns (one value dominating the table)
+- [ ] Not indexing low-selectivity columns *for the dominant value*; a partial index still serves the rare-value query (`WHERE status = 'failed'`)
 - [ ] Expression index used where the query applies a function (`lower(email)`)
 - [ ] Full-text or trigram index used for leading-wildcard search, not a B-tree
 - [ ] Write cost measured on write-heavy tables (every index taxes every `INSERT`/`UPDATE`)
@@ -156,10 +156,10 @@ Cache the *absence* of a result too. A key that misses on every lookup (a nonexi
 One recompute, N waiters. Prevents a hot key's expiry from delivering the full concurrent load to the origin:
 
 ```typescript
-const inFlight = new Map<string, Promise<Row>>();
+const inFlight = new Map<string, Promise<unknown>>();
 
-function loadOnce(key: string, fetcher: () => Promise<Row>): Promise<Row> {
-  const existing = inFlight.get(key);
+function loadOnce<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  const existing = inFlight.get(key) as Promise<T> | undefined;
   if (existing) return existing;
   const p = fetcher().finally(() => inFlight.delete(key));
   inFlight.set(key, p);

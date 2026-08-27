@@ -177,7 +177,7 @@ CREATE INDEX idx_tasks_owner_created ON tasks (owner_id, created_at DESC);
 
 | Situation | Why |
 |---|---|
-| Low selectivity (a `status` column that is 95% one value) | A sequential scan is genuinely cheaper; the planner will ignore the index |
+| Low selectivity, querying the dominant value (a `status` column that is 95% `active`, filtered on `active`) | A sequential scan is genuinely cheaper; the planner will ignore the index. Filtering on the rare value is the opposite case, and a partial index serves it well |
 | Leading wildcard (`LIKE '%term'`) | A B-tree cannot seek without a prefix; needs trigram or full-text |
 | Function on the column (`WHERE lower(email) = ?`) | The plain column index is unusable; index the expression instead |
 | Write-heavy table | Every index is a tax on every `INSERT`/`UPDATE`; measure the write cost, not just the read gain |
