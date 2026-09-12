@@ -46,6 +46,18 @@ If your agent does not route skills natively, start with the `using-agent-skills
 
 If your host already discovers and activates skills from their descriptions, do not also paste `using-agent-skills` into an always-on system prompt or rules file. That creates two routers for the same task. Install the individual skills and let the host activate them on demand instead.
 
+### Existing projects need no migration
+
+Install the pack from the existing project's root using the normal setup path
+for your agent, then keep working in that project. Skills activate for matching
+tasks; they do not require a new repository layout or a one-time conversion of
+existing code.
+
+Do not copy this repository's root `AGENTS.md` or `CLAUDE.md` into the project.
+Those files configure contributors to agent-skills itself. Add only the skills
+and any project-specific instructions your agent normally reads. For a gradual
+rollout in an established codebase, follow the [Adoption Guide](adoption-guide.md).
+
 ## Recommended Setup
 
 Rolling out to a real project? The **[Adoption Guide](adoption-guide.md)** covers two end-to-end paths: the full lifecycle from day one for a greenfield project, and an incremental, verification-first rollout for an established codebase. The setup below is the quick version.
