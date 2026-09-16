@@ -244,9 +244,14 @@ if [ -z "$TOOL_NAME" ]; then
         rm -f "$EXPANDED"
       else
         # Nothing left to expand — the file was rewritten wholesale, so the
-        # backup is the only remaining copy of the protected blocks.
-        printf 'Warning: no BLOCK_ placeholder left in %s, restored from backup\n' "$orig" >&2
+        # backup is the only remaining copy of the protected blocks. Keep the
+        # rewrite in the cache before the backup overwrites it, so the work is
+        # recoverable rather than lost.
+        rewritten="$CACHE/${fid}.recovered"
+        cat "$orig" > "$rewritten"
         cat "$bak" > "$orig"
+        printf 'Warning: no BLOCK_ placeholder left in %s, restored from backup. Rewrite kept at %s\n' \
+          "$orig" "$rewritten" >&2
       fi
       rm -f "$bak" "$pathfile" "$CACHE/${fid}".block.* "$CACHE/${fid}".reason.* "$CACHE/${fid}".prefix.* "$CACHE/${fid}".suffix.*
       rmdir "$CACHE/${fid}.lock" 2>/dev/null
