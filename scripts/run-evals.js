@@ -451,6 +451,10 @@ function parseGrading(raw, expectations) {
     if (!Number.isInteger(r.id) || r.id < 1 || r.id > n) return null;
     if (seenIds.has(r.id)) return null;
     seenIds.add(r.id);
+    // The id is the binding; the grader's own wording is advisory. Replace it
+    // with the declared expectation so the report always carries the canonical
+    // text, even when the grader paraphrased it.
+    r.text = expectations[r.id - 1];
   }
 
   // Derive counters from the validated set; do not trust the grader's summary.
@@ -462,7 +466,10 @@ function parseGrading(raw, expectations) {
   if (!Number.isInteger(summary.failed) || summary.failed !== failed) return null;
   if (!Number.isInteger(summary.total) || summary.total !== n) return null;
   if (typeof summary.pass_rate !== 'number' || !Number.isFinite(summary.pass_rate)) return null;
-  if (summary.pass_rate !== passRate) return null;
+  // The integer counters must be exact, but pass_rate is a derived quantity:
+  // a grader that rounds or mis-divides it is not reporting a different
+  // outcome, so recompute it rather than discarding the whole grading.
+  summary.pass_rate = passRate;
   return g;
 }
 

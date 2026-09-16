@@ -400,7 +400,7 @@ test('derives pass_rate from counters rather than trusting the grader value', ()
   assert.notEqual(valid, null);
   assert.equal(valid.summary.pass_rate, 0.5);
 
-  // Wrong pass_rate with correct counters: must be rejected
+  // Wrong pass_rate with correct counters: accepted, but recomputed
   const wrongRaw = JSON.stringify({
     expectations: [
       { id: 1, text: 'first expectation', passed: true, evidence: 'observed' },
@@ -408,7 +408,28 @@ test('derives pass_rate from counters rather than trusting the grader value', ()
     ],
     summary: { passed: 1, failed: 1, total: 2, pass_rate: 0.999 },
   });
-  assert.equal(parseGrading(wrongRaw, expectations), null);
+  const corrected = parseGrading(wrongRaw, expectations);
+  assert.notEqual(corrected, null);
+  assert.equal(corrected.summary.pass_rate, 0.5);
+  // The integer counters stay exact checks
+  assert.equal(corrected.summary.passed, 1);
+  assert.equal(corrected.summary.failed, 1);
+});
+
+test('replaces paraphrased grader text with the declared expectation', () => {
+  const expectations = ['first expectation', 'second expectation'];
+  const raw = JSON.stringify({
+    expectations: [
+      { id: 2, text: 'the agent did the second thing', passed: false, evidence: 'not observed' },
+      { id: 1, text: 'roughly the first one', passed: true, evidence: 'observed' },
+    ],
+    summary: { passed: 1, failed: 1, total: 2, pass_rate: 0.5 },
+  });
+
+  const result = parseGrading(raw, expectations);
+  assert.notEqual(result, null);
+  assert.equal(result.expectations.find((r) => r.id === 1).text, 'first expectation');
+  assert.equal(result.expectations.find((r) => r.id === 2).text, 'second expectation');
 });
 
 test('materializes a git baseline and applies a working-tree patch', () => {
