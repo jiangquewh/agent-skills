@@ -395,6 +395,7 @@ cat > "$RT" <<'EOF'
 const a = `template ${literal}`;
 // simplify-ignore-start: perf-critical
 const secret = "glob*chars? [and] \\backslashes";
+if (a && b) { mask = flags & 0xff; } // ampersands must survive bash 5.2 patsub_replacement
 hot_loop($HOME);
 // simplify-ignore-end
 middle line
