@@ -488,9 +488,6 @@ function extractExecutorModel(trace) {
 
 function persistGradingOutcome(base, grading, raw, runMeta) {
   if (!grading) {
-    // Remove stale grading from a prior run so collectors don't read
-    // it beside the raw output of the run that actually happened.
-    try { fs.unlinkSync(`${base}.grading.json`); } catch { /* may not exist */ }
     fs.writeFileSync(`${base}.grading.raw.txt`, raw);
     return false;
   }
@@ -544,6 +541,11 @@ function runBehavioral(skillName, dryRun) {
       console.log(`[dry-run] eval ${ev.id}: ${artifact}; claude -p --verbose --output-format stream-json --permission-mode acceptEdits --allowedTools ${EXECUTOR_TOOLS} --append-system-prompt <${skillName}/SKILL.md> < prompt-on-stdin`);
       continue;
     }
+    const base = path.join(RESULTS_DIR, `${skillName}.eval-${ev.id}`);
+    // Clear the result slot up front so neither file survives if the
+    // executor or grader crashes before persistGradingOutcome runs.
+    fs.rmSync(`${base}.grading.json`, { force: true });
+    fs.rmSync(`${base}.grading.raw.txt`, { force: true });
     const workspace = kind === 'dialogue'
       ? fs.mkdtempSync(path.join(os.tmpdir(), 'agent-skills-dialogue-eval-'))
       : materializeWorkspace(ev);
@@ -583,7 +585,6 @@ function runBehavioral(skillName, dryRun) {
     // argv, or it would blow past the OS argument-size limit (E2BIG).
     const raw = execFileSync('claude', ['-p'], { input: graderPrompt, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, timeout: GRADER_TIMEOUT_MS });
     const grading = parseGrading(raw, ev.expectations);
-    const base = path.join(RESULTS_DIR, `${skillName}.eval-${ev.id}`);
     const runMeta = {
       executor_model: extractExecutorModel(trace),
       grader_model: 'unknown',

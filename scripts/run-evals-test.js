@@ -434,17 +434,14 @@ test('replaces paraphrased grader text with the declared expectation', () => {
 
 // ---------- persistGradingOutcome stale-cleanup tests ----------
 
-test('rejected grading removes a stale grading.json from a prior run', () => {
+test('rejected grading writes raw output', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'grading-cleanup-'));
   try {
     const base = path.join(dir, 'my-skill.eval-1');
-    // Simulate a previous successful run that left a .grading.json
-    fs.writeFileSync(`${base}.grading.json`, '{"previous":"run"}\n');
 
     const result = persistGradingOutcome(base, null, 'unparseable grader output');
 
     assert.equal(result, false);
-    assert.equal(fs.existsSync(`${base}.grading.json`), false, 'stale grading.json must be removed');
     assert.equal(fs.existsSync(`${base}.grading.raw.txt`), true, 'raw output must be written');
     assert.equal(fs.readFileSync(`${base}.grading.raw.txt`, 'utf8'), 'unparseable grader output');
   } finally {
@@ -480,6 +477,54 @@ test('accepted grading writes grading.json', () => {
     assert.equal(result, true);
     const written = JSON.parse(fs.readFileSync(`${base}.grading.json`, 'utf8'));
     assert.deepEqual(written, grading);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ---------- upfront slot-clearing tests ----------
+
+test('a grader that throws leaves no result file behind', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'grading-crash-'));
+  try {
+    const base = path.join(dir, 'my-skill.eval-1');
+    // Stale files from a prior run
+    fs.writeFileSync(`${base}.grading.json`, '{"previous":"run"}\n');
+    fs.writeFileSync(`${base}.grading.raw.txt`, 'previous raw output');
+
+    // runBehavioral clears the slot before invoking the executor
+    fs.rmSync(`${base}.grading.json`, { force: true });
+    fs.rmSync(`${base}.grading.raw.txt`, { force: true });
+
+    // Executor or grader crashes — persistGradingOutcome is never called
+
+    assert.equal(fs.existsSync(`${base}.grading.json`), false, 'stale grading.json must not survive a crash');
+    assert.equal(fs.existsSync(`${base}.grading.raw.txt`), false, 'stale grading.raw.txt must not survive a crash');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('successful grading leaves no stale raw file behind', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'grading-success-'));
+  try {
+    const base = path.join(dir, 'my-skill.eval-1');
+    // Stale raw from a prior rejected run
+    fs.writeFileSync(`${base}.grading.raw.txt`, 'previous raw output');
+
+    // runBehavioral clears the slot before invoking the executor
+    fs.rmSync(`${base}.grading.json`, { force: true });
+    fs.rmSync(`${base}.grading.raw.txt`, { force: true });
+
+    // Successful grading
+    const grading = {
+      expectations: [{ id: 1, text: 'x', passed: true, evidence: 'y' }],
+      summary: { passed: 1, failed: 0, total: 1, pass_rate: 1 },
+    };
+    persistGradingOutcome(base, grading, 'unused');
+
+    assert.equal(fs.existsSync(`${base}.grading.json`), true, 'grading.json must be written');
+    assert.equal(fs.existsSync(`${base}.grading.raw.txt`), false, 'stale grading.raw.txt must not survive');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
