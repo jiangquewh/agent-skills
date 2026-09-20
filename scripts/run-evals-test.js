@@ -8,7 +8,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const test = require('node:test');
-const { materializeWorkspace, parseGrading, persistGradingOutcome, extractExecutorModel } = require('./run-evals');
+const { materializeWorkspace, parseGrading, clearGradingSlot, persistGradingOutcome, extractExecutorModel } = require('./run-evals');
 
 const RUNNER = path.join(__dirname, 'run-evals.js');
 
@@ -492,9 +492,7 @@ test('a grader that throws leaves no result file behind', () => {
     fs.writeFileSync(`${base}.grading.json`, '{"previous":"run"}\n');
     fs.writeFileSync(`${base}.grading.raw.txt`, 'previous raw output');
 
-    // runBehavioral clears the slot before invoking the executor
-    fs.rmSync(`${base}.grading.json`, { force: true });
-    fs.rmSync(`${base}.grading.raw.txt`, { force: true });
+    clearGradingSlot(base);
 
     // Executor or grader crashes — persistGradingOutcome is never called
 
@@ -512,9 +510,7 @@ test('successful grading leaves no stale raw file behind', () => {
     // Stale raw from a prior rejected run
     fs.writeFileSync(`${base}.grading.raw.txt`, 'previous raw output');
 
-    // runBehavioral clears the slot before invoking the executor
-    fs.rmSync(`${base}.grading.json`, { force: true });
-    fs.rmSync(`${base}.grading.raw.txt`, { force: true });
+    clearGradingSlot(base);
 
     // Successful grading
     const grading = {

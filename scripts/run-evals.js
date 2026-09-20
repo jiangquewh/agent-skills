@@ -486,6 +486,11 @@ function extractExecutorModel(trace) {
   return null;
 }
 
+function clearGradingSlot(base) {
+  fs.rmSync(`${base}.grading.json`, { force: true });
+  fs.rmSync(`${base}.grading.raw.txt`, { force: true });
+}
+
 function persistGradingOutcome(base, grading, raw, runMeta) {
   if (!grading) {
     fs.writeFileSync(`${base}.grading.raw.txt`, raw);
@@ -542,10 +547,7 @@ function runBehavioral(skillName, dryRun) {
       continue;
     }
     const base = path.join(RESULTS_DIR, `${skillName}.eval-${ev.id}`);
-    // Clear the result slot up front so neither file survives if the
-    // executor or grader crashes before persistGradingOutcome runs.
-    fs.rmSync(`${base}.grading.json`, { force: true });
-    fs.rmSync(`${base}.grading.raw.txt`, { force: true });
+    clearGradingSlot(base);
     const workspace = kind === 'dialogue'
       ? fs.mkdtempSync(path.join(os.tmpdir(), 'agent-skills-dialogue-eval-'))
       : materializeWorkspace(ev);
@@ -633,4 +635,4 @@ function main(args = process.argv.slice(2)) {
 
 if (require.main === module) main();
 
-module.exports = { materializeWorkspace, parseGrading, persistGradingOutcome, extractExecutorModel };
+module.exports = { materializeWorkspace, parseGrading, clearGradingSlot, persistGradingOutcome, extractExecutorModel };
