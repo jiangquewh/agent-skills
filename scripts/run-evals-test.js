@@ -8,7 +8,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const test = require('node:test');
-const { materializeWorkspace, parseGrading } = require('./run-evals');
+const { materializeWorkspace, parseGrading, persistGradingOutcome } = require('./run-evals');
 
 const RUNNER = path.join(__dirname, 'run-evals.js');
 
@@ -430,6 +430,59 @@ test('replaces paraphrased grader text with the declared expectation', () => {
   assert.notEqual(result, null);
   assert.equal(result.expectations.find((r) => r.id === 1).text, 'first expectation');
   assert.equal(result.expectations.find((r) => r.id === 2).text, 'second expectation');
+});
+
+// ---------- persistGradingOutcome stale-cleanup tests ----------
+
+test('rejected grading removes a stale grading.json from a prior run', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'grading-cleanup-'));
+  try {
+    const base = path.join(dir, 'my-skill.eval-1');
+    // Simulate a previous successful run that left a .grading.json
+    fs.writeFileSync(`${base}.grading.json`, '{"previous":"run"}\n');
+
+    const result = persistGradingOutcome(base, null, 'unparseable grader output');
+
+    assert.equal(result, false);
+    assert.equal(fs.existsSync(`${base}.grading.json`), false, 'stale grading.json must be removed');
+    assert.equal(fs.existsSync(`${base}.grading.raw.txt`), true, 'raw output must be written');
+    assert.equal(fs.readFileSync(`${base}.grading.raw.txt`, 'utf8'), 'unparseable grader output');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('rejected grading succeeds even when no prior grading.json exists', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'grading-cleanup-'));
+  try {
+    const base = path.join(dir, 'my-skill.eval-1');
+
+    const result = persistGradingOutcome(base, null, 'bad output');
+
+    assert.equal(result, false);
+    assert.equal(fs.existsSync(`${base}.grading.raw.txt`), true);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('accepted grading writes grading.json', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'grading-cleanup-'));
+  try {
+    const base = path.join(dir, 'my-skill.eval-1');
+    const grading = {
+      expectations: [{ id: 1, text: 'x', passed: true, evidence: 'y' }],
+      summary: { passed: 1, failed: 0, total: 1, pass_rate: 1 },
+    };
+
+    const result = persistGradingOutcome(base, grading, 'unused');
+
+    assert.equal(result, true);
+    const written = JSON.parse(fs.readFileSync(`${base}.grading.json`, 'utf8'));
+    assert.deepEqual(written, grading);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('materializes a git baseline and applies a working-tree patch', () => {
