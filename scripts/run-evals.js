@@ -473,7 +473,20 @@ function parseGrading(raw, expectations) {
   return g;
 }
 
-function persistGradingOutcome(base, grading, raw) {
+function extractExecutorModel(trace) {
+  for (const line of trace.split('\n')) {
+    if (!line.trim()) continue;
+    try {
+      const event = JSON.parse(line);
+      if (event.type === 'system' && event.subtype === 'init') {
+        return event.model || null;
+      }
+    } catch { continue; }
+  }
+  return null;
+}
+
+function persistGradingOutcome(base, grading, raw, runMeta) {
   if (!grading) {
     // Remove stale grading from a prior run so collectors don't read
     // it beside the raw output of the run that actually happened.
@@ -481,7 +494,8 @@ function persistGradingOutcome(base, grading, raw) {
     fs.writeFileSync(`${base}.grading.raw.txt`, raw);
     return false;
   }
-  fs.writeFileSync(`${base}.grading.json`, JSON.stringify(grading, null, 2) + '\n');
+  const output = runMeta ? { ...grading, run: runMeta } : grading;
+  fs.writeFileSync(`${base}.grading.json`, JSON.stringify(output, null, 2) + '\n');
   return true;
 }
 
@@ -570,7 +584,12 @@ function runBehavioral(skillName, dryRun) {
     const raw = execFileSync('claude', ['-p'], { input: graderPrompt, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, timeout: GRADER_TIMEOUT_MS });
     const grading = parseGrading(raw, ev.expectations);
     const base = path.join(RESULTS_DIR, `${skillName}.eval-${ev.id}`);
-    if (!persistGradingOutcome(base, grading, raw)) {
+    const runMeta = {
+      executor_model: extractExecutorModel(trace),
+      grader_model: 'unknown',
+      timestamp: new Date().toISOString(),
+    };
+    if (!persistGradingOutcome(base, grading, raw, runMeta)) {
       console.log(`  ✗  eval ${ev.id}: grader returned invalid JSON — raw saved to ${path.relative(ROOT, base)}.grading.raw.txt`);
       failures++;
       continue;
@@ -613,4 +632,4 @@ function main(args = process.argv.slice(2)) {
 
 if (require.main === module) main();
 
-module.exports = { materializeWorkspace, parseGrading, persistGradingOutcome };
+module.exports = { materializeWorkspace, parseGrading, persistGradingOutcome, extractExecutorModel };

@@ -8,7 +8,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const test = require('node:test');
-const { materializeWorkspace, parseGrading, persistGradingOutcome } = require('./run-evals');
+const { materializeWorkspace, parseGrading, persistGradingOutcome, extractExecutorModel } = require('./run-evals');
 
 const RUNNER = path.join(__dirname, 'run-evals.js');
 
@@ -480,6 +480,87 @@ test('accepted grading writes grading.json', () => {
     assert.equal(result, true);
     const written = JSON.parse(fs.readFileSync(`${base}.grading.json`, 'utf8'));
     assert.deepEqual(written, grading);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ---------- extractExecutorModel tests ----------
+
+test('extracts model from the stream-json init event', () => {
+  const trace = [
+    '{"type":"system","subtype":"init","model":"claude-sonnet-4-6-20250514","session_id":"abc"}',
+    '{"type":"assistant","message":{"id":"msg_1","content":[{"type":"text","text":"Hi"}]}}',
+    '{"type":"result","subtype":"success","result":"Hi"}',
+  ].join('\n');
+
+  assert.equal(extractExecutorModel(trace), 'claude-sonnet-4-6-20250514');
+});
+
+test('returns null when the trace has no init event', () => {
+  const trace = [
+    '{"type":"assistant","message":{"id":"msg_1","content":[]}}',
+    '{"type":"result","subtype":"success","result":"done"}',
+  ].join('\n');
+
+  assert.equal(extractExecutorModel(trace), null);
+});
+
+test('returns null when the init event has no model field', () => {
+  const trace = '{"type":"system","subtype":"init","session_id":"abc"}\n';
+
+  assert.equal(extractExecutorModel(trace), null);
+});
+
+test('tolerates non-JSON lines in the trace', () => {
+  const trace = [
+    'not json',
+    '{"type":"system","subtype":"init","model":"claude-opus-4-6","session_id":"abc"}',
+  ].join('\n');
+
+  assert.equal(extractExecutorModel(trace), 'claude-opus-4-6');
+});
+
+// ---------- persistGradingOutcome run identity tests ----------
+
+test('accepted grading includes run metadata when provided', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'grading-run-meta-'));
+  try {
+    const base = path.join(dir, 'my-skill.eval-1');
+    const grading = {
+      expectations: [{ id: 1, text: 'x', passed: true, evidence: 'y' }],
+      summary: { passed: 1, failed: 0, total: 1, pass_rate: 1 },
+    };
+    const runMeta = {
+      executor_model: 'claude-sonnet-4-6-20250514',
+      grader_model: 'unknown',
+      timestamp: '2026-09-21T00:00:00.000Z',
+    };
+
+    persistGradingOutcome(base, grading, 'unused', runMeta);
+
+    const written = JSON.parse(fs.readFileSync(`${base}.grading.json`, 'utf8'));
+    assert.deepEqual(written.run, runMeta);
+    assert.deepEqual(written.expectations, grading.expectations);
+    assert.deepEqual(written.summary, grading.summary);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('accepted grading omits run key when no metadata is provided', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'grading-no-meta-'));
+  try {
+    const base = path.join(dir, 'my-skill.eval-1');
+    const grading = {
+      expectations: [{ id: 1, text: 'x', passed: true, evidence: 'y' }],
+      summary: { passed: 1, failed: 0, total: 1, pass_rate: 1 },
+    };
+
+    persistGradingOutcome(base, grading, 'unused');
+
+    const written = JSON.parse(fs.readFileSync(`${base}.grading.json`, 'utf8'));
+    assert.equal('run' in written, false);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
