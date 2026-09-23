@@ -2,7 +2,6 @@
 
 "use strict";
 
-const { execFileSync } = require("node:child_process");
 const { readFileSync } = require("node:fs");
 
 const manifestPaths = [

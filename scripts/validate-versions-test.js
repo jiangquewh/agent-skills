@@ -1,7 +1,6 @@
 "use strict";
 
 const assert = require("node:assert/strict");
-const { execFileSync } = require("node:child_process");
 const { readFileSync } = require("node:fs");
 const test = require("node:test");
 
