@@ -199,3 +199,12 @@ test('floor guard: a renamed rule is reported as removed, with a note that its l
   assert.match(result.stderr, /\[rule-removed\]/);
   assert.match(result.stderr, /label changed/);
 });
+
+test('floor guard: a threshold that loses its direction words is reported as removed, with a note saying so', () => {
+  const root = makeRepo();
+  editConstraints(root, '| Coverage | >= 80% |', '| Coverage | 80% |');
+  const result = runGuard(root);
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /\[threshold-removed\]/);
+  assert.match(result.stderr, /direction words/);
+});

@@ -154,6 +154,9 @@ for (const f of findings) console.error(`  [${f.rule}] ${f.file}: ${f.text}`);
 if (findings.some((f) => f.rule === 'rule-removed')) {
   console.error('\nA rule-removed finding can also mean the rule\'s label changed: rename a rule in one commit and change its thresholds in another.');
 }
+if (findings.some((f) => f.rule === 'threshold-removed')) {
+  console.error('\nA threshold-removed finding can also mean a number gained or lost its direction words (">= 80%" becoming "80%", or the reverse): compare the two lines before assuming a threshold was deleted.');
+}
 console.error('\nEach is a move that lowers the bar. Fix the code, or route it through a tracked exception.');
 process.exit(1);
 ```
