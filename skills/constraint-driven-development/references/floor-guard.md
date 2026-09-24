@@ -96,7 +96,10 @@ for (const { file, text } of removed) {
 // carries a direction read from the words around it: a minimum (>=, at least, must not fall) is
 // loosened by going down, a maximum (<=, at most, under, must not grow) by going up. A number whose
 // direction cannot be read is reported whenever it changes, because the guard cannot tell
-// tightening from loosening and staying quiet is the wrong default.
+// tightening from loosening and staying quiet is the wrong default. Numbers are paired within
+// their direction (the first minimum with the first minimum, and so on), so a number added
+// elsewhere in the text does not shift the pairing; a threshold with no counterpart after the
+// edit was removed, and an added one tightens.
 const ruleKey = (t) => {
   const s = t.trim();
   if (s.startsWith('|')) return s.split('|').map((c) => c.trim()).filter(Boolean)[0] ?? '';
@@ -130,19 +133,27 @@ for (const r of removedRules) {
   }
   const before = thresholds(r.text), after = thresholds(a.text);
   let verdict = null;
-  before.forEach((b, i) => {
-    const n = after[i];
-    if (verdict || !n || n.n === b.n) return;
-    const dir = b.dir ?? n.dir;
-    if (dir === 'min' ? n.n < b.n : dir === 'max' ? n.n > b.n : false) verdict = 'threshold-loosened';
-    else if (!dir) verdict = 'threshold-changed';
-  });
+  for (const dir of ['min', 'max', null]) {
+    const was = before.filter((x) => x.dir === dir), now = after.filter((x) => x.dir === dir);
+    was.forEach((b, i) => {
+      const n = now[i];
+      if (verdict) return;
+      if (!n) verdict = 'threshold-removed';
+      else if (n.n === b.n) return;
+      else if (dir === 'min' ? n.n < b.n : dir === 'max' ? n.n > b.n : true) {
+        verdict = dir ? 'threshold-loosened' : 'threshold-changed';
+      }
+    });
+  }
   if (verdict) flag(verdict, r.file, r.text + '  ->  ' + a.text);
 }
 
 if (findings.length === 0) { console.log('floor-guard: clean'); process.exit(0); }
 console.error('floor-guard: ' + findings.length + ' floor violation(s):');
 for (const f of findings) console.error(`  [${f.rule}] ${f.file}: ${f.text}`);
+if (findings.some((f) => f.rule === 'rule-removed')) {
+  console.error('\nA rule-removed finding can also mean the rule\'s label changed: rename a rule in one commit and change its thresholds in another.');
+}
 console.error('\nEach is a move that lowers the bar. Fix the code, or route it through a tracked exception.');
 process.exit(1);
 ```

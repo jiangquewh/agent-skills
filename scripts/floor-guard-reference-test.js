@@ -25,6 +25,7 @@ const CONSTRAINTS = [
   '',
   '## Floor',
   '- No skipped tests.',
+  '- Latency: p95 under 200 ms and p99 under 900 ms.',
   '',
   '| Dimension | Rule |',
   '|---|---|',
@@ -137,6 +138,15 @@ const cases = [
   ['lowering a maximum is silent', 0, (root) => {
     editConstraints(root, '| Bundle | <= 200 KB |', '| Bundle | <= 150 KB |');
   }],
+  ['deleting one threshold from a rule is a violation', 1, (root) => {
+    editConstraints(root, 'p95 under 200 ms and p99 under 900 ms.', 'p95 under 200 ms.');
+  }],
+  ['a number inserted before a threshold is silent', 0, (root) => {
+    editConstraints(root, '| Coverage | >= 80% |', '| Coverage | per ADR 7, >= 80% |');
+  }],
+  ['adding a threshold to a rule is silent', 0, (root) => {
+    editConstraints(root, '| Bundle | <= 200 KB |', '| Bundle | <= 200 KB, <= 60 KB gzipped |');
+  }],
   ['a deleted floor rule is a violation', 1, (root) => {
     editConstraints(root, '- No skipped tests.\n', '');
   }],
@@ -179,4 +189,13 @@ test('floor guard: a threshold with no readable direction is reported when it ch
   const result = runGuard(root);
   assert.equal(result.status, 1, result.stderr);
   assert.match(result.stderr, /threshold-changed/);
+});
+
+test('floor guard: a renamed rule is reported as removed, with a note that its label may have changed', () => {
+  const root = makeRepo();
+  editConstraints(root, '| Coverage | >= 80% |', '| Code coverage | >= 80% |');
+  const result = runGuard(root);
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /\[rule-removed\]/);
+  assert.match(result.stderr, /label changed/);
 });
