@@ -38,6 +38,12 @@ const KEBAB_CASE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 // describe exclusions, not trigger conditions.
 const DESCRIPTION_TRIGGER        = /\buse (this )?when\b|\buse (before|after|during)\b/i;
 const DESCRIPTION_TRIGGER_NEGATE = /\b(do not|don't|never) use (this )?(when|before|after|during)\b/i;
+// Same pattern, global — used to strip *every* negated clause before checking
+// whether a positive trigger remains. Without /g only the first is removed, so
+// a description carrying two or more negated clauses and no positive one would
+// still match DESCRIPTION_TRIGGER on the leftovers and pass. Kept separate from
+// the non-global form above because a /g regex carries lastIndex across .test().
+const DESCRIPTION_TRIGGER_NEGATE_ALL = new RegExp(DESCRIPTION_TRIGGER_NEGATE.source, 'gi');
 
 // Sections every standard SKILL.md must contain.
 // Each entry is an array of acceptable heading strings — the first
@@ -287,7 +293,7 @@ function lintSkillContent(dirName, content, knownSkills) {
     }
     const hasTrigger       = DESCRIPTION_TRIGGER.test(fm.description);
     const onlyNegated      = hasTrigger && DESCRIPTION_TRIGGER_NEGATE.test(fm.description)
-      && !fm.description.replace(DESCRIPTION_TRIGGER_NEGATE, '').match(DESCRIPTION_TRIGGER);
+      && !fm.description.replace(DESCRIPTION_TRIGGER_NEGATE_ALL, '').match(DESCRIPTION_TRIGGER);
     if (!hasTrigger || onlyNegated) {
       errors.push(
         `Description has no 'when to use' trigger — add a "Use when …" clause ` +

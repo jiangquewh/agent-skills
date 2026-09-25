@@ -100,6 +100,20 @@ test('reports a description with no trigger clause', () => {
   assert.match(errors[0], /no 'when to use' trigger/);
 });
 
+test('a description whose only triggers are negated is rejected regardless of how many there are', () => {
+  const content = withAllSections(
+    [
+      '---',
+      'name: alpha',
+      'description: Designs alphas. Do not use when building betas. Never use when the input is JSON.',
+      '---',
+    ].join('\n')
+  );
+  const { errors } = lintSkillContent('alpha', content, KNOWN);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /no 'when to use' trigger/);
+});
+
 test('reports frontmatter name that disagrees with the directory', () => {
   const content = withAllSections(
     ['---', 'name: beta', 'description: Designs alphas. Use when building one.', '---'].join('\n')
